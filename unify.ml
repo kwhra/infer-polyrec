@@ -1,0 +1,33 @@
+open Syntax
+open EnvU
+open EnvD
+open Subst
+open Variable
+open Print
+open Print_latex
+open Basic_op
+
+
+exception CannotUnify
+(* rules -> subst *)
+let rec unify rules = match rules with
+  | [] -> Subst.empty
+  | (ty1, ty2)::tl -> 
+    if ty1 = ty2
+      then unify tl
+    else if (is_tyvar ty1) && not (is_fv_in_ty (tyvar_of ty1) ty2)
+      then (let subst = singlesubst (tyvar_of ty1) ty2 in
+							substmerge (unify (rulessubst subst tl)) (subst))
+    else if (is_tyvar ty2) && not (is_fv_in_ty (tyvar_of ty2) ty1)
+      then (let subst = singlesubst (tyvar_of ty2) ty1 in
+							substmerge (unify (rulessubst subst tl)) (subst))
+    else if (is_tyarr ty1) && (is_tyarr ty2)
+						then (match ty1 with TyArr (ty11, ty12) ->
+                    (match ty2 with TyArr (ty21, ty22) ->
+                      unify (tl @ [(ty11, ty21); (ty12, ty22)])
+                      | _ -> raise CannotUnify) 
+                    | _ -> raise CannotUnify )
+    else raise CannotUnify
+
+(* ty1 -> ty2 -> subst *)
+let rec singleunify ty1 ty2 = unify [(ty1, ty2)]
