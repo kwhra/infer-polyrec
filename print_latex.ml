@@ -48,7 +48,6 @@ let rec exp_to_latex exp = match exp with
   | ExpAbs (x1, exp2) -> " (\\backslash " ^ x1 ^ "." ^ (exp_to_latex exp2) ^ ")"
   | ExpApp (exp1, exp2) -> "(" ^ (exp_to_latex exp1) ^ "\\," ^ (exp_to_latex exp2) ^ ")"
   | ExpRec (expvar1, exp2) -> " rec\\{ " ^ expvar1 ^ "=" ^ (exp_to_latex exp2) ^ " \\} "
-  | ExpIf (exp1, exp2) -> "\\mathrm{if}(" ^ (exp_to_latex exp1) ^ "\\,|\\," ^ (exp_to_latex exp2) ^ ")"
   | _ -> ""(* todo: let *)
 
 let rec rules_to_latex rules = match rules with

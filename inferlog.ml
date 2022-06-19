@@ -5,7 +5,7 @@ open Subst
 open Variable
 open Print
 open Print_latex
-open Basic_op
+open Baseop
 
 (* ref int *)
 (* 0 -> false, 1 -> string, 2 -> latex *)
@@ -58,7 +58,6 @@ let gen_string envD exp typing rules =
 			| ExpAbs _ -> "(Abs)"
 			| ExpApp _ -> "(App)"
 			| ExpRec _ -> "(Rec)"
-			| ExpIf _ -> "(If)"
 			| _ -> "" (* todo: let *)
 	in if visiblerules()
 		then label ^ "\n" ^ (condition_rules_to_string (envD, exp, typing) rules) ^ "\n"
@@ -85,8 +84,6 @@ let gen_latex envD exp typing rules =
 										   "\\RightLabel{(App)}\n" ^ "\\BinaryInfC{$" ^ (condition_to_latex cond) ^ ruleslog ^ "$}\n"
 		| ExpRec _ ->
 			"\\AxiomC{}\n" ^ "\\RightLabel{(Rec)}\n" ^ "\\UnaryInfC{$" ^ (condition_to_latex cond) ^ ruleslog ^ "$}\n"
-		| ExpIf _ ->
-										   "\\RightLabel{(If)}\n" ^ "\\BinaryInfC{$" ^ (condition_to_latex cond) ^ ruleslog ^ "$}\n"
 		| _ -> "" (* todo: let *)
 
 (* envD -> exp -> typing -> rules -> unit *)

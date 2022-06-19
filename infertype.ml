@@ -5,7 +5,7 @@ open Subst
 open Variable
 open Print
 open Print_latex
-open Basic_op
+open Baseop
 open Unify
 open Inferlog
 
@@ -21,10 +21,11 @@ let consttype_of c = match c with
               TyArr(u, TyArr(u, u))
 
 (* expvar list -> envU *)
-let envU_of_Bx ls = List.fold_right 
-                      (fun expvar envU -> EnvU.add expvar (TyVar (getfleshtyvar())) envU)
-                      ls
-                      EnvU.empty
+let envU_of_Bx ls = 
+  List.fold_right 
+    (fun expvar envU -> EnvU.add expvar (TyVar (getfleshtyvar())) envU)
+    ls
+    EnvU.empty
 
 (* ty -> ty *)
 let rec rename ty = 
@@ -45,120 +46,99 @@ let setreccount k = reccount := k;()
 exception CannotInferType1
 exception CannotInferType2
 
-(* expression -> (envD, typing, rules) *)
-(* write inferlog string. (not flush) *)
+(* envD -> expression -> (infertree, rules) *)
+(* infertree = (envD, exp, typing) multitree *)
 let rec infertype_with_rules envD exp = 
-  (* tempval for result *)
-  let resenvD = ref EnvD.empty in
-  let restyping = ref (EnvU.empty, TyCon TyUnit) in
-  let resrules = ref [] in
-  (* infer type body *)
-  (* return unit in each blanch*)
-  (
     match exp with
     (* var & var-P *)        
-    | ExpVar x -> if is_in_domD x envD
-                  (* var: base case *)
-                  (* D, x:u |- x:<;u> *)
-                  then let typing0 = EnvD.find x envD in
-                          resenvD := envD;
-                          restyping := typing0;
-                          resrules := []
-                  (* var-P: base case *)
-                  (* |-x:<x:u;u> *)
-                  else let u = TyVar (getfleshtyvar()) in
-                          resenvD := envD;
-                          restyping := (EnvU.add x u EnvU.empty, u);
-                          resrules := []
+    | ExpVar x -> 
+      if is_in_domD x envD
+        (* var: base case *)
+        (* D, x:u |- x:<;u> *)
+              (* find "x:u" in D *)
+        then  let typing = EnvD.find x envD in
+              (* "no condition" => D,x:u|-x:<;u> *)
+              let tree = Node((envD, exp, typing), []) in
+              (tree, [])
+        (* var-P: base case *)
+        (* |-x:<x:u;u> *)
+        else  let u = TyVar (getfleshtyvar()) in
+              (* "no condition" => D|-x:<x:u;u> *)
+              let tree = Node((envD, exp, (EnvU.add x u EnvU.empty, u)), []) in
+              (tree, [])
     (* con: base case *)
     (* |-c:<;type(c)> *)
     | ExpCon c -> 
-      resenvD := envD;
-      restyping := (EnvU.empty, consttype_of c);
-      resrules := []
+      (* "no condition" => D|-c:<;type(c)> *)
+      let tree = Node ((envD, exp, (EnvU.empty, consttype_of c)), []) in
+      (tree, [])
     (* abs, abs-vac *)
     | ExpAbs (x, exp1) ->
       (* |-e:<U,x:u0; u1> => *)
-      (match (infertype_with_rules envD exp1) with (envD1, (envU1, ty1), rules) ->
-        if is_fv_in_exp x exp1 
-          (* abs *)
-          (* |-e:<U,x:u0; u1> => |-\x.e:<U;u0->u1> *)
-          then if not(is_in_D x envD) 
-                then let u = EnvU.find x envU1 in
-                        resenvD := envD1;
-                        restyping := ((EnvU.remove x envU1), TyArr (u, ty1));
-                        resrules := rules
-                else raise CannotInferType1
-          (* abs-vac *)
-          (* |-e:<U;u1> => |-\x.e:<U;U0->u1>, u0=flesh *)
-          else if not(is_in_D x envD) 
-                then let u = TyVar (getfleshtyvar ()) in
-                        resenvD := envD1;
-                        restyping := (envU1, TyArr (u, ty1));
-                        resrules := rules
-                else raise CannotInferType2)
+      let (tree1, rules) = infertype_with_rules envD exp1 in
+      let Node((envD1, _, (envU1, ty1)), _) = tree1 in
+      if is_fv_in_exp x exp1 
+        (* abs *)
+        (* |-e:<U,x:u0; u1> => |-\x.e:<U;u0->u1> *)
+        then if not(is_in_D x envD)
+              then  let u = EnvU.find x envU1 in
+                    (* |-e:<U,x:u0; u1> => |-\x.e:<U;u0->u1> *)
+                    let tree = Node((envD1, exp, ((EnvU.remove x envU1), TyArr (u, ty1))), [tree1]) in
+                    (tree, rules)
+              else raise CannotInferType1
+        (* abs-vac *)
+        (* |-e:<U;u1> => |-\x.e:<U;U0->u1>, u0=flesh *)
+        else if not(is_in_D x envD) 
+              then  let u = TyVar (getfleshtyvar ()) in
+                    (* |-e:<U;u1> => |-\x.e:<U;U0->u1>, u0=flesh *)
+                    let tree = Node((envD1, exp, (envU1, TyArr (u, ty1))), [tree1]) in
+                    (tree, rules)
+              else raise CannotInferType2
     (* app *)
     (* |-e1<U1;u1>, |-e2<U2;u2> => |-e1 e2:<U1+U2;u3>, u1=u2->u3, u3=flesh *)
     | ExpApp (exp1, exp2) ->
       (* |-e1<U1;u1> *)
-      ( match (infertype_with_rules envD exp1) with (envD1, (envU1, ty1), rules1) -> 
-      (* |-e1<U2;u2> *)
-        match (infertype_with_rules envD exp2) with (envD2, (envU2, ty2), rules2) ->
-          (* prepare new tyvar and type (exp1 exp2) as newtyvar.  *)
-          (* ex) exp1:ty1, exp2:ty2 => exp1 exp2: ty. [ty1=ty2->ty] *)
-          (* if typing assumptions corrided, the first one adapted. *)
-          (* ex) x:t1 in U1, x:t2 in U2 =>  x:t1 in U1U2 [t1=t2]*)
-          let tyvar = TyVar (getfleshtyvar ()) in
-              let rules12 = (rules_of_samekey_in envU2 envU1) in
-                resenvD := envDmerge envD1 envD2;
-                restyping := (envUmerge envU1 envU2, tyvar);
-                resrules := rules1@rules2@[(ty1, TyArr(ty2, tyvar))]@rules12 )
+      let (tree1, rules1) = infertype_with_rules envD exp1 in
+      let Node((envD1, _, (envU1, ty1)), _) = tree1 in
+      (* |-e2<U2;u2> *)
+      let (tree2, rules2) = infertype_with_rules envD exp2 in
+      let Node((envD2, _, (envU2, ty2)), _) = tree2 in
+        (* prepare new tyvar and type (exp1 exp2) as newtyvar.  *)
+        (* ex) exp1:ty1, exp2:ty2 => exp1 exp2: ty. [ty1=ty2->ty] *)
+        (* if typing assumptions corrided, the first one adapted. *)
+        (* ex) x:t1 in U1, x:t2 in U2 =>  x:t1 in U1U2 [t1=t2]*)
+        let tyvar = TyVar (getfleshtyvar ()) in
+        let rules12 = (rules_of_samekey_in envU2 envU1) in
+          (* |-e1<U1;u1>, |-e2<U2;u2> => |-e1 e2:<U1+U2;u3> *)
+          let tree = Node((envDmerge envD1 envD2, exp, (envUmerge envU1 envU2, tyvar)), [tree1;tree2]) in
+          (* rules1, rules2, u1=u2->u3, rules from samekey in U1+U2 *)
+          let rules = rules1@rules2@[(ty1, TyArr(ty2, tyvar))]@rules12 in
+          (tree, rules)
     (* rec-k *)
     | ExpRec (expvar1, exp2) -> 
       (* int -> envD -> expvar -> typing -> exp -> unit *)
       let rec loop k envD expvar typing0 exp = 
-        (if k = 0 
-          (* rec-p *)
-          (* D,x:u|-rec x=e:u *)
-          then  (resenvD := envD;
-                restyping := typing0;
-                resrules := []; )
-          (* rec-k k>=1 *)
-          else (writeinferlog ("% Rec " ^ (string_of_int k) ^ " start\n");
-            let (envD1, typing1, rules1) = infertype_with_rules (EnvD.add expvar typing0 envD) exp in
-              let subst = unify rules1 in
+        ( if k = 0 
+            (* rec-p *)
+            (* D,x:u|-rec x=e:u *)
+            then  let tree = Node((envD, exp, typing0), []) in
+                  (tree, [])
+            (* rec-k k>=1 *)
+            else
+              let (tree1, rules1) = infertype_with_rules (EnvD.add expvar typing0 envD) exp in
+              let Node((envD1, _, typing1), _) = tree1 in
+                let subst = unify rules1 in
                 let typing1' = typingsubst subst typing1 in
-                  genunifylog rules1 subst;
-                  writeinferlog ("% Rec " ^ (string_of_int k) ^ "end\n");
-                  loop (k-1) envD expvar typing1' exp )
+                  loop (k-1) envD expvar typing1' exp
         ) in
       let typing0 = ((envU_of_Bx (fvd_in_exp exp envD)), TyVar (getfleshtyvar ())) in
         loop !reccount envD expvar1 typing0 exp2
-    | ExpIf (exp1, exp2) -> 
-      (* |-e1<U1;u1> *)
-      ( match (infertype_with_rules envD exp1) with (envD1, (envU1, ty1), rules1) -> 
-      (* |-e1<U2;u2> *)
-        match (infertype_with_rules envD exp2) with (envD2, (envU2, ty2), rules2) ->
-          (* prepare new tyvar and type (exp1 exp2) as newtyvar.  *)
-          (* ex) exp1:ty1, exp2:ty2 => exp1 exp2: ty. [ty1=ty2->ty] *)
-          (* if typing assumptions corrided, the first one adapted. *)
-          (* ex) x:t1 in U1, x:t2 in U2 =>  x:t1 in U1U2 [t1=t2]*)
-          let tyvar = TyVar (getfleshtyvar ()) in
-          let rules12 = (rules_of_samekey_in envU2 envU1) in
-            resenvD := envDmerge envD1 envD2;
-            restyping := (envUmerge envU1 envU2, tyvar);
-            resrules := rules1@rules2@[(tyvar, ty1);(tyvar, ty2)]@rules12 )
-    | _ -> () (* todo:let *)
-  );
-  (* make log *)
-  geninferlog !resenvD exp !restyping !resrules;
-  (* return (envD, typing, rules) *)
-  (!resenvD, !restyping, !resrules)
+    | _ -> (Node((EnvD.empty, exp, (EnvU.empty, TyCon TyUnit)), []), []) (* todo:let *)
 
 (* envD -> exp -> cond *)
 let infertype envD exp = 
-  resetcounter(); 
-  resetlog();
-  match (infertype_with_rules envD exp) with (envD1, typing, rules)
-    -> let subst = unify rules in
-        (envD, exp, typingsubst subst typing)
+  resetcounter();
+  let (tree, rules) = infertype_with_rules envD exp in
+  let Node((envD1, _, typing), _) = tree in
+    let subst = unify rules in
+      (envD, exp, typingsubst subst typing)

@@ -5,7 +5,7 @@ open Subst
 open Variable
 open Print
 open Print_latex
-open Basic_op
+open Baseop
 
 
 exception CannotUnify

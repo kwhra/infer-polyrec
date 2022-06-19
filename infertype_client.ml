@@ -5,14 +5,14 @@ open Subst
 open Variable
 open Print
 open Print_latex
-open Basic_op
+open Baseop
 open Unify
 open Inferlog
 open Infertype
 open Test
 
 (* input envD and exp to test infering type *)
-let testexp = exp1a
+let testexp = exp2
 let testenvD = initD
 
 (* input destination of log *)

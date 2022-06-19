@@ -52,7 +52,6 @@ let rec exp_to_string exp = match exp with
   | ExpAbs (x1, exp2) -> "(\\" ^ x1 ^ ". " ^ (exp_to_string exp2) ^ ")"
   | ExpApp (exp1, exp2) -> "(" ^ (exp_to_string exp1) ^ " " ^ (exp_to_string exp2) ^ ")"
   | ExpRec (expvar1, exp2) -> " rec{" ^ expvar1 ^ " = " ^ (exp_to_string exp2) ^ "}"
-  | ExpIf (exp1, exp2) -> " if " ^ (exp_to_string exp1) ^ " " ^ (exp_to_string exp2) ^ " "
   | _ -> "" (* todo *)
 
 let rec rules_to_string rules = match rules with

@@ -9,7 +9,7 @@ OCAMLOPTFLAGS=$(INCLUDES) # add other options for ocamlopt here
 # make "infer"
 # infer type of testcase in test.ml 
 # The list of object files for "infer"
-PROG1_OBJS=syntax.cmo basic_op.cmo variable.cmo print.cmo print_latex.cmo\
+PROG1_OBJS=syntax.cmo baseop.cmo variable.cmo print.cmo print_latex.cmo\
 					 unify.cmo inferlog.cmo infertype.cmo test.cmo infertype_client.cmo
 PROG1 = infer
 

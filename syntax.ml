@@ -45,9 +45,9 @@ module EnvD = Map.Make(struct type t = expvar let compare = compare end)
 (* envD, expression, typing *)
 type condition = ((ty EnvD.t) * expression * typing)
 
-type 'a multitree = Leaf of 'a | Node of ('a multitree) list
+type 'a tree = Node of 'a * ('a tree list)
 
 (* condition tree *)
 (* (D, exp, ty) -- (D, exp, ty) *)
 (*              |- (D, exp, ty) *)                 
-type infertree = condition multitree
+type condtree = condition tree

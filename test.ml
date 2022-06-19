@@ -73,11 +73,6 @@ let exp1'' = ExpApp(ExpApp(ExpApp(ExpCon Ifc, ExpCon Bool), expY), exp1''')
 let exp1' = ExpAbs(g, ExpAbs(h, ExpAbs(y, exp1'')))
 let exp1 = ExpRec(f, exp1')
 
-let exp1''a = ExpIf(expY, exp1''')
-let exp1'a = ExpAbs(g, ExpAbs(h, ExpAbs(y, exp1''a)))
-let exp1a = ExpRec(f, exp1'a)
-
-
 (* rec{f = \gh1h2y.ifc false y (g(fgh1h2(fh1gh2(fh1h2g y))))} *)
 let h' = "h'"
 let expH' = ExpVar h'
