@@ -1,6 +1,7 @@
-(* definitionss of type *)
-
+(* definitionss of expression (term, form) *)
+(* exp = var, const, abstraction, application, rec, let *)
 type expvar = string
+
 type expcon = 
   | Unit
   | Bool
@@ -13,28 +14,40 @@ type expression =
   | ExpAbs of expvar * expression
   | ExpApp of expression * expression
   | ExpRec of expvar * expression
-  | ExpIf of expression * expression
   | ExpLet of expvar * expression * expression
 
+(* definitions of type *)
+(* type = const, var, unit, arrow *)
 type tyvar = int (* 0=A, 1=B, 2=C, ... *)
-type ty = 
-  | TyUnit
+
+type tycon = 
   | TyBool
+  | TyUnit
+  
+type ty = 
+  | TyCon of tycon
   | TyVar of tyvar
   | TyArr of ty * ty
 
-(* like (expvar * ty) list *)
+(* (expvar * ty) list *)
 module EnvU = Map.Make(struct type t = expvar let compare = compare end)
 
 type typing = (ty EnvU.t) * ty
 
-(* like (tyvar * ty) list *)
+(* (tyvar * ty) list *)
 module Subst = Map.Make(struct type t = tyvar let compare = compare end)
 
 type rules = (ty * ty) list
 
-(* new: *)
-(* like (expvar * typing) list *)
+(* (expvar * typing) list *)
 module EnvD = Map.Make(struct type t = expvar let compare = compare end)
 
+(* envD, expression, typing *)
 type condition = ((ty EnvD.t) * expression * typing)
+
+type 'a multitree = Leaf of 'a | Node of ('a multitree) list
+
+(* condition tree *)
+(* (D, exp, ty) -- (D, exp, ty) *)
+(*              |- (D, exp, ty) *)                 
+type infertree = condition multitree

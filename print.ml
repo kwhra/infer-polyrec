@@ -16,8 +16,9 @@ let tyvar_to_string tyvar = String.make 1 (Char.chr ((Char.code 'A')+ (tyvar mod
 
 (* ty -> string *)
 let rec type_to_string ty = match ty with
-  | TyUnit -> "Unit"
-  | TyBool -> " Bool "
+  | TyCon tycon -> (match tycon with
+                    | TyBool -> "Bool"
+                    | TyUnit -> "Unit")
   | TyVar tyvar -> tyvar_to_string tyvar
   | TyArr (ty1, ty2) -> "(" ^ (type_to_string ty1) ^ " -> " ^ (type_to_string ty2) ^ ")" (* (A->B) *)
 
@@ -52,6 +53,7 @@ let rec exp_to_string exp = match exp with
   | ExpApp (exp1, exp2) -> "(" ^ (exp_to_string exp1) ^ " " ^ (exp_to_string exp2) ^ ")"
   | ExpRec (expvar1, exp2) -> " rec{" ^ expvar1 ^ " = " ^ (exp_to_string exp2) ^ "}"
   | ExpIf (exp1, exp2) -> " if " ^ (exp_to_string exp1) ^ " " ^ (exp_to_string exp2) ^ " "
+  | _ -> "" (* todo *)
 
 let rec rules_to_string rules = match rules with
   | [] -> ""

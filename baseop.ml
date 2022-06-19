@@ -13,27 +13,42 @@ let singleenvU expvar ty = envUappend expvar ty (EnvU.empty)
 
 (* envU -> envU -> envU *)
 (* x:t1 in U1, x:t2 in U2 =>  x:t1 in U1U2*)
-let envUmerge envU1 envU2 = EnvU.merge (fun _ ty1 ty2 -> match ty1, ty2 with
-                                                            | Some x, Some y -> Some x 
-                                                            | Some x, None -> Some x
-                                                            | None, Some y -> Some y
-                                                            | None, None -> None) envU1 envU2
+let envUmerge envU1 envU2 = 
+  EnvU.merge 
+    (fun _ ty1 ty2 ->
+      match ty1, ty2 with
+      | Some x, Some y -> Some x 
+      | Some x, None -> Some x
+      | None, Some y -> Some y
+      | None, None -> None)
+    envU1
+    envU2
 
 exception CannotMergeEnvD
 (* envD -> envD -> envD *)
-let envDmerge envD1 envD2 = EnvD.merge (fun _ typing1 typing2 -> match typing1, typing2 with
-                                                            | Some x, Some y -> Some x (* task *)
-                                                            | Some x, None -> Some x
-                                                            | None, Some y -> Some y
-                                                            | None, None -> None) envD1 envD2
+let envDmerge envD1 envD2 = 
+  EnvD.merge 
+    (fun _ typing1 typing2 -> 
+      match typing1, typing2 with
+      | Some x, Some y -> Some x (* task *)
+      | Some x, None -> Some x
+      | None, Some y -> Some y
+      | None, None -> None) 
+    envD1
+    envD2
 
 (* envU -> envU -> envU *)
 (* if x:A and x:B->C, the list is [(A, B->C)] *)
-let samekey_in envU1 envU2 = EnvU.merge (fun _ ty1 ty2 -> match ty1, ty2 with
-                                                            | Some x, Some y -> Some(x, y) (* task: add rules X=Y unify or other *)
-                                                            | Some x, None -> None
-                                                            | None, Some y -> None
-                                                            | None, None -> None) envU1 envU2
+let samekey_in envU1 envU2 = 
+  EnvU.merge
+    (fun _ ty1 ty2 -> 
+      match ty1, ty2 with
+      | Some x, Some y -> Some(x, y) 
+      | Some x, None -> None
+      | None, Some y -> None
+      | None, None -> None)
+    envU1
+    envU2
 
 (* envU -> envU -> (key * (ty*ty)) list  *)
 let samekeylist_in envU1 envU2 = EnvU.bindings (samekey_in envU1 envU2)
@@ -58,7 +73,6 @@ let rec typesinglesubst tyvar11 ty12 ty2 = match ty2 with
   | TyVar tyvar21 -> if tyvar11 = tyvar21 then ty12 else TyVar tyvar21
   | TyArr (ty21, ty22) -> TyArr ((typesinglesubst tyvar11 ty12 ty21), (typesinglesubst tyvar11 ty12 ty22))
   | _ -> ty2
-(* task: list *)
 
 (* subst -> type -> type *)
 let rec typesubst subst ty = Subst.fold
@@ -85,11 +99,16 @@ let typingsubst subst typing = match typing with (envU, ty) ->
                                 ((envUsubst subst envU), (typesubst subst ty))
 
 (* sub -> sub -> sub *)
-let substmerge sub1 sub2 = Subst.merge (fun _ ty1 ty2 -> match ty1, ty2 with
-                                                            | Some x, Some y -> Some x (* task: how to do *)
-                                                            | Some x, None -> Some x
-                                                            | None, Some y -> Some y
-                                                            | None, None -> None) (substsubst sub2 sub1) (substsubst sub1 sub2)
+let substmerge sub1 sub2 =
+  Subst.merge
+    (fun _ ty1 ty2 -> 
+      match ty1, ty2 with
+      | Some x, Some y -> Some x (* task: how to do *)
+      | Some x, None -> Some x
+      | None, Some y -> Some y
+      | None, None -> None)
+    (substsubst sub2 sub1)
+    (substsubst sub1 sub2)
 
 (* subst -> rules -> rules *)
 let rec rulessubst subst c = match c with

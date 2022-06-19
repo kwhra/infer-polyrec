@@ -12,8 +12,9 @@ let tyvar_to_latex tyvar = String.make 1 (Char.chr ((Char.code 'A')+ (tyvar mod 
 
 (* ty -> string *)
 let rec type_to_latex ty = match ty with
-  | TyUnit -> "\\mathrm{Unit}"
-  | TyBool -> "\\mathrm{Bool}"
+  | TyCon tycon -> (match tycon with
+                    | TyBool -> "\\mathrm{Bool}"
+                    | TyUnit -> "\\mathrm{Unit}")
   | TyVar tyvar -> tyvar_to_latex tyvar
   | TyArr (ty1, ty2) -> "( " ^ (type_to_latex ty1) ^ " \\rightarrow " ^ (type_to_latex ty2) ^ " )" (* (A->B) *)
 
@@ -48,6 +49,7 @@ let rec exp_to_latex exp = match exp with
   | ExpApp (exp1, exp2) -> "(" ^ (exp_to_latex exp1) ^ "\\," ^ (exp_to_latex exp2) ^ ")"
   | ExpRec (expvar1, exp2) -> " rec\\{ " ^ expvar1 ^ "=" ^ (exp_to_latex exp2) ^ " \\} "
   | ExpIf (exp1, exp2) -> "\\mathrm{if}(" ^ (exp_to_latex exp1) ^ "\\,|\\," ^ (exp_to_latex exp2) ^ ")"
+  | _ -> ""(* todo: let *)
 
 let rec rules_to_latex rules = match rules with
   | [] -> ""
@@ -56,7 +58,7 @@ let rec rules_to_latex rules = match rules with
 (* new *)
 (* expvar -> ty -> string *)
 let expvar_typing_to_latex expvar typing = expvar ^ " :\\langle " ^ (typing_to_latex typing) ^ " \\rangle, "
-(* task: delete last comma *)
+(* todo: delete last comma *)
 
 let envD_to_latex envD = EnvD.fold (fun expvar typing string -> (expvar_typing_to_latex expvar typing)^string) envD ""
 

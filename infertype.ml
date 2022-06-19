@@ -13,10 +13,10 @@ exception NotDefined
 
 (* type(c) : expcon -> ty *)
 let consttype_of c = match c with
-  | Unit -> TyUnit
-  | Bool -> TyBool
+  | Unit -> TyCon TyUnit
+  | Bool -> TyCon TyBool
   | Ifc -> let u = TyVar (getfleshtyvar()) in
-              TyArr(TyBool, TyArr(u, TyArr(u, u)))
+              TyArr(TyCon TyBool, TyArr(u, TyArr(u, u)))
   | Arth -> let u = TyVar (getfleshtyvar()) in
               TyArr(u, TyArr(u, u))
 
@@ -32,10 +32,10 @@ let rec rename ty =
   let getfleshrename () =
     let temp = !renamecounter in
     renamecounter := temp+1;temp in
-(* doing *)
-  ()
-  
-  
+  let subst = match ty with
+    | TyVar _-> (* doing *)()
+    |_->()
+  in ()
 
 (* ref int *)
 let reccount = ref 0
@@ -50,7 +50,7 @@ exception CannotInferType2
 let rec infertype_with_rules envD exp = 
   (* tempval for result *)
   let resenvD = ref EnvD.empty in
-  let restyping = ref (EnvU.empty, TyBool) in
+  let restyping = ref (EnvU.empty, TyCon TyUnit) in
   let resrules = ref [] in
   (* infer type body *)
   (* return unit in each blanch*)
@@ -148,6 +148,7 @@ let rec infertype_with_rules envD exp =
             resenvD := envDmerge envD1 envD2;
             restyping := (envUmerge envU1 envU2, tyvar);
             resrules := rules1@rules2@[(tyvar, ty1);(tyvar, ty2)]@rules12 )
+    | _ -> () (* todo:let *)
   );
   (* make log *)
   geninferlog !resenvD exp !restyping !resrules;

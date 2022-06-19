@@ -59,6 +59,7 @@ let gen_string envD exp typing rules =
 			| ExpApp _ -> "(App)"
 			| ExpRec _ -> "(Rec)"
 			| ExpIf _ -> "(If)"
+			| _ -> "" (* todo: let *)
 	in if visiblerules()
 		then label ^ "\n" ^ (condition_rules_to_string (envD, exp, typing) rules) ^ "\n"
 		else label ^ "\n" ^ (condition_to_string (envD, exp, typing)) ^ "\n"
@@ -86,6 +87,7 @@ let gen_latex envD exp typing rules =
 			"\\AxiomC{}\n" ^ "\\RightLabel{(Rec)}\n" ^ "\\UnaryInfC{$" ^ (condition_to_latex cond) ^ ruleslog ^ "$}\n"
 		| ExpIf _ ->
 										   "\\RightLabel{(If)}\n" ^ "\\BinaryInfC{$" ^ (condition_to_latex cond) ^ ruleslog ^ "$}\n"
+		| _ -> "" (* todo: let *)
 
 (* envD -> exp -> typing -> rules -> unit *)
 let geninferlog envD exp typing rules = 
