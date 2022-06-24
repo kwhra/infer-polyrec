@@ -9,7 +9,7 @@ open Subst
 let envUappend expvar ty envU = EnvU.add expvar ty envU 
 
 (* expvar -> type -> envU *)
-let singleenvU expvar ty = envUappend expvar ty (EnvU.empty)
+let singleenvU expvar ty = EnvU.singleton expvar ty
 
 (* envU -> envU -> envU *)
 (* x:t1 in U1, x:t2 in U2 =>  x:t1 in U1U2*)
@@ -30,7 +30,7 @@ let envDmerge envD1 envD2 =
   EnvD.merge 
     (fun _ typing1 typing2 -> 
       match typing1, typing2 with
-      | Some x, Some y -> Some x (* task *)
+      | Some x, Some y -> Some x (* todo *)
       | Some x, None -> Some x
       | None, Some y -> Some y
       | None, None -> None) 
@@ -65,7 +65,7 @@ let rules_of_samekey_in envU1 envU2 = deletekey (samekeylist_in envU1 envU2)
 let substappend tyvar ty subst = Subst.add tyvar ty subst
 
 (* tyvar -> ty -> sub *)
-let singlesubst tyvar ty = substappend tyvar ty Subst.empty
+let singlesubst tyvar ty = Subst.singleton tyvar ty
 
 (* tyvar -> ty -> type -> type *)
 (* look type struct, then substitute *)
@@ -75,25 +75,29 @@ let rec typesinglesubst tyvar11 ty12 ty2 = match ty2 with
   | _ -> ty2
 
 (* subst -> type -> type *)
-let rec typesubst subst ty = Subst.fold
-                              (typesinglesubst)
-                              subst
-                              ty
+let rec typesubst subst ty =
+  Subst.fold
+  (typesinglesubst)
+  subst
+  ty
 
 (* subst -> envU -> envU *)
-let envUsubst subst envU = EnvU.map
-                          (typesubst subst) (* :ty -> ty *)
-                          envU
+let envUsubst subst envU = 
+  EnvU.map
+  (typesubst subst) (* :ty -> ty *)
+  envU
 
 (* tyvar -> ty -> envU ->envU *)
-let envUsinglesubst  tyvar ty envU = envUsubst 
-                                    (Subst.add tyvar ty Subst.empty)
-                                    envU
+let envUsinglesubst  tyvar ty envU = 
+  envUsubst 
+  (Subst.add tyvar ty Subst.empty)
+  envU
 
 (* sub -> sub -> sub *)
-let substsubst subst sub = Subst.map
-                            (typesubst subst) (* :ty -> ty *)
-                            sub
+let substsubst subst sub = 
+  Subst.map
+  (typesubst subst) (* :ty -> ty *)
+  sub
 
 let typingsubst subst typing = match typing with (envU, ty) -> 
                                 ((envUsubst subst envU), (typesubst subst ty))
@@ -103,10 +107,11 @@ let substmerge sub1 sub2 =
   Subst.merge
     (fun _ ty1 ty2 -> 
       match ty1, ty2 with
-      | Some x, Some y -> Some x (* task: how to do *)
+      | Some x, Some y -> Some x
       | Some x, None -> Some x
       | None, Some y -> Some y
       | None, None -> None)
+    (* substs are merged unintentionally order *)
     (substsubst sub2 sub1)
     (substsubst sub1 sub2)
 
