@@ -44,8 +44,8 @@ let rec rename ty =
           (* if tyvar not exists, make subst *)
           else Subst.singleton tyvar (TyVar (getfleshrename()))
     | TyCon _ -> Subst.empty
-    | TyArr (ty1, ty2) -> substmerge (makesubst ty1) (makesubst ty2)
-  in typesubst (makesubst ty) ty
+    | TyArr (ty1, ty2) -> merge_subst (makesubst ty1) (makesubst ty2)
+  in apply_subst_to_type (makesubst ty) ty
 
 (* ref int *)
 let reccount = ref 0
@@ -57,7 +57,7 @@ exception CannotInferType2
 
 (* envD -> expression -> (infertree, rules) *)
 (* infertree = (envD, exp, typing) multitree *)
-let rec make_condtree_rules envD exp = 
+let rec make_condtree_and_rules envD exp = 
     match exp with
     (* var & var-P *)        
     | ExpVar x -> 
@@ -73,7 +73,7 @@ let rec make_condtree_rules envD exp =
         (* |-x:<x:u;u> *)
         else  let u = TyVar (getfleshtyvar()) in
               (* "no condition" => D|-x:<x:u;u> *)
-              let tree = Node((envD, exp, (EnvU.add x u EnvU.empty, u)), []) in
+              let tree = Node((envD, exp, (EnvU.singleton x u, u)), []) in
               (tree, [])
     (* con: base case *)
     (* |-c:<;type(c)> *)
@@ -84,7 +84,7 @@ let rec make_condtree_rules envD exp =
     (* abs, abs-vac *)
     | ExpAbs (x, exp1) ->
       (* |-e:<U,x:u0; u1> => *)
-      let (tree1, rules) = make_condtree_rules envD exp1 in
+      let (tree1, rules) = make_condtree_and_rules envD exp1 in
       let Node((envD1, _, (envU1, ty1)), _) = tree1 in
       if is_fv_in_exp x exp1 
         (* abs *)
@@ -107,10 +107,10 @@ let rec make_condtree_rules envD exp =
     (* |-e1<U1;u1>, |-e2<U2;u2> => |-e1 e2:<U1+U2;u3>, u1=u2->u3, u3=flesh *)
     | ExpApp (exp1, exp2) ->
       (* |-e1<U1;u1> *)
-      let (tree1, rules1) = make_condtree_rules envD exp1 in
+      let (tree1, rules1) = make_condtree_and_rules envD exp1 in
       let Node((envD1, _, (envU1, ty1)), _) = tree1 in
       (* |-e2<U2;u2> *)
-      let (tree2, rules2) = make_condtree_rules envD exp2 in
+      let (tree2, rules2) = make_condtree_and_rules envD exp2 in
       let Node((envD2, _, (envU2, ty2)), _) = tree2 in
         (* prepare new tyvar and type (exp1 exp2) as newtyvar.  *)
         (* ex) exp1:ty1, exp2:ty2 => exp1 exp2: ty. [ty1=ty2->ty] *)
@@ -119,7 +119,7 @@ let rec make_condtree_rules envD exp =
         let tyvar = TyVar (getfleshtyvar ()) in
         let rules12 = (rules_of_samekey_in envU2 envU1) in
           (* |-e1<U1;u1>, |-e2<U2;u2> => |-e1 e2:<U1+U2;u3> *)
-          let tree = Node((envDmerge envD1 envD2, exp, (envUmerge envU1 envU2, tyvar)), [tree1;tree2]) in
+          let tree = Node((merge_envD envD1 envD2, exp, (merge_envU envU1 envU2, tyvar)), [tree1;tree2]) in
           (* rules1, rules2, u1=u2->u3, rules from samekey in U1+U2 *)
           let rules = rules1@rules2@[(ty1, TyArr(ty2, tyvar))]@rules12 in
           (tree, rules)
@@ -134,10 +134,10 @@ let rec make_condtree_rules envD exp =
                   (tree, [])
             (* rec-k k>=1 *)
             else
-              let (tree1, rules1) = make_condtree_rules (EnvD.add expvar typing0 envD) exp in
+              let (tree1, rules1) = make_condtree_and_rules (EnvD.add expvar typing0 envD) exp in
               let Node((envD1, _, typing1), _) = tree1 in
                 let subst = unify rules1 in
-                let typing1' = typingsubst subst typing1 in
+                let typing1' = apply_subst_to_typing subst typing1 in
                   loop (k-1) envD expvar typing1' exp
         ) in
       let typing0 = ((envU_of_Bx (fvd_in_exp exp envD)), TyVar (getfleshtyvar ())) in
@@ -147,7 +147,7 @@ let rec make_condtree_rules envD exp =
 (* envD -> exp -> cond *)
 let infertype envD exp = 
   resetcounter();
-  let (tree, rules) = make_condtree_rules envD exp in
+  let (tree, rules) = make_condtree_and_rules envD exp in
   let Node((envD1, _, typing), _) = tree in
     let subst = unify rules in
-      (envD, exp, typingsubst subst typing)
+      (envD, exp, apply_subst_to_typing subst typing)
