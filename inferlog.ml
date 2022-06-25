@@ -60,8 +60,8 @@ let gen_string envD exp typing rules =
 			| ExpRec _ -> "(Rec)"
 			| _ -> "" (* todo: let *)
 	in if visiblerules()
-		then label ^ "\n" ^ (condition_rules_to_string (envD, exp, typing) rules) ^ "\n"
-		else label ^ "\n" ^ (condition_to_string (envD, exp, typing)) ^ "\n"
+		then label ^ "\n" ^ (string_of_cond_and_rules (envD, exp, typing) rules) ^ "\n"
+		else label ^ "\n" ^ (string_of_cond (envD, exp, typing)) ^ "\n"
 
 (* encd -> exp -> typing -> rules -> string *)
 (* ex: *)
@@ -70,20 +70,20 @@ let gen_string envD exp typing rules =
 (* D|-e:<x:u; u> *)
 let gen_latex envD exp typing rules = 
 	let ruleslog = 
-		(if visiblerules() then ", where [" ^ (rules_to_latex rules) ^ "]"
+		(if visiblerules() then ", where [" ^ (latex_of_rules rules) ^ "]"
 		else "") in
 	let cond = (envD, exp, typing) in 
 		match exp with
 		| ExpVar _ -> 
-			"\\AxiomC{}\n" ^ "\\RightLabel{(Var)}\n" ^ "\\UnaryInfC{$" ^ (condition_to_latex cond) ^ ruleslog ^ "$}\n"
+			"\\AxiomC{}\n" ^ "\\RightLabel{(Var)}\n" ^ "\\UnaryInfC{$" ^ (latex_of_cond cond) ^ ruleslog ^ "$}\n"
 		| ExpCon _ -> 
-			"\\AxiomC{}\n" ^ "\\RightLabel{(Con)}\n" ^ "\\UnaryInfC{$" ^ (condition_to_latex cond) ^ ruleslog ^ "$}\n"
+			"\\AxiomC{}\n" ^ "\\RightLabel{(Con)}\n" ^ "\\UnaryInfC{$" ^ (latex_of_cond cond) ^ ruleslog ^ "$}\n"
 		| ExpAbs _ -> 
-										 	 "\\RightLabel{(Abs)}\n" ^ "\\UnaryInfC{$" ^ (condition_to_latex cond) ^ ruleslog ^ "$}\n"
+										 	 "\\RightLabel{(Abs)}\n" ^ "\\UnaryInfC{$" ^ (latex_of_cond cond) ^ ruleslog ^ "$}\n"
 		| ExpApp _ -> 
-										   "\\RightLabel{(App)}\n" ^ "\\BinaryInfC{$" ^ (condition_to_latex cond) ^ ruleslog ^ "$}\n"
+										   "\\RightLabel{(App)}\n" ^ "\\BinaryInfC{$" ^ (latex_of_cond cond) ^ ruleslog ^ "$}\n"
 		| ExpRec _ ->
-			"\\AxiomC{}\n" ^ "\\RightLabel{(Rec)}\n" ^ "\\UnaryInfC{$" ^ (condition_to_latex cond) ^ ruleslog ^ "$}\n"
+			"\\AxiomC{}\n" ^ "\\RightLabel{(Rec)}\n" ^ "\\UnaryInfC{$" ^ (latex_of_cond cond) ^ ruleslog ^ "$}\n"
 		| _ -> "" (* todo: let *)
 
 (* envD -> exp -> typing -> rules -> unit *)
@@ -94,5 +94,5 @@ let geninferlog envD exp typing rules =
 
 let genunifylog rules subst  = 
 	if nologmode() then ()
-	else if stringmode() then writeinferlog ( "where " ^ (rules_to_string rules) ^ "\nunify\n" ^ (subst_to_string subst) ^ "\n" )
-	else writeinferlog ( "\nwhere $" ^ (rules_to_latex rules) ^ "$\n\nunify\n\n$" ^ (subst_to_latex subst) ^ "$\n\n" )
+	else if stringmode() then writeinferlog ( "where " ^ (string_of_rules rules) ^ "\nunify\n" ^ (string_of_subst subst) ^ "\n" )
+	else writeinferlog ( "\nwhere $" ^ (latex_of_rules rules) ^ "$\n\nunify\n\n$" ^ (latex_of_subst subst) ^ "$\n\n" )

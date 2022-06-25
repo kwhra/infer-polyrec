@@ -8,63 +8,63 @@ open Subst
    typing = {envU}, A 
    print typing = <typing> *)
 
-let tyvar_to_latex tyvar = String.make 1 (Char.chr ((Char.code 'A')+ (tyvar mod 26)))
+let latex_of_tyvar tyvar = String.make 1 (Char.chr ((Char.code 'A')+ (tyvar mod 26)))
 
 (* ty -> string *)
-let rec type_to_latex ty = match ty with
+let rec latex_of_type ty = match ty with
   | TyCon tycon -> (match tycon with
                     | TyBool -> "\\mathrm{Bool}"
                     | TyUnit -> "\\mathrm{Unit}")
-  | TyVar tyvar -> tyvar_to_latex tyvar
-  | TyArr (ty1, ty2) -> "( " ^ (type_to_latex ty1) ^ " \\rightarrow " ^ (type_to_latex ty2) ^ " )" (* (A->B) *)
+  | TyVar tyvar -> latex_of_tyvar tyvar
+  | TyArr (ty1, ty2) -> "( " ^ (latex_of_type ty1) ^ " \\rightarrow " ^ (latex_of_type ty2) ^ " )" (* (A->B) *)
 
 (* expvar -> ty -> string *)
-let expvar_type_to_latex expvar ty = expvar ^ ": " ^ (type_to_latex ty) ^ ", "
+let latex_of_expvar_and_type expvar ty = expvar ^ ": " ^ (latex_of_type ty) ^ ", "
 (* task: delete last comma *)
 
 (* envU -> string *)
 (* without {} *)
-let envU_to_latex envU = EnvU.fold (fun expvar ty string -> (expvar_type_to_latex expvar ty)^string) envU ""
+let latex_of_envU envU = EnvU.fold (fun expvar ty string -> (latex_of_expvar_and_type expvar ty)^string) envU ""
 
 (* expvar -> ty -> string *)
-let tyvar_type_to_latex tyvar ty = (tyvar_to_latex tyvar) ^ " \\mapsto " ^ (type_to_latex ty) ^ ","
+let latex_of_tyvar_and_type tyvar ty = (latex_of_tyvar tyvar) ^ " \\mapsto " ^ (latex_of_type ty) ^ ","
 (* task: delete last comma *)
 
-let subst_to_latex subst = Subst.fold (fun tyvar ty string -> (tyvar_type_to_latex tyvar ty)^string) subst ""
+let latex_of_subst subst = Subst.fold (fun tyvar ty string -> (latex_of_tyvar_and_type tyvar ty)^string) subst ""
 
 (* typing -> string *)
-let typing_to_latex typing = match typing with 
-  | (envU, ty) -> "\\{" ^ (envU_to_latex envU) ^ "\\}; " ^ (type_to_latex ty)  (* {x:u};u *)
+let latex_of_typing typing = match typing with 
+  | (envU, ty) -> "\\{" ^ (latex_of_envU envU) ^ "\\}; " ^ (latex_of_type ty)  (* {x:u};u *)
 
-let expcon_to_latex expcon = match expcon with
+let latex_of_expcon expcon = match expcon with
   | Unit -> "\\mathrm{unit}"
   | Bool -> "\\mathrm{bool}"
   | Arth -> " + "
   | Ifc -> "\\mathrm{Ifc}"
 
-let rec exp_to_latex exp = match exp with
-  | ExpCon c -> expcon_to_latex c
+let rec latex_of_exp exp = match exp with
+  | ExpCon c -> latex_of_expcon c
   | ExpVar x -> x
-  | ExpAbs (x1, exp2) -> " (\\backslash " ^ x1 ^ "." ^ (exp_to_latex exp2) ^ ")"
-  | ExpApp (exp1, exp2) -> "(" ^ (exp_to_latex exp1) ^ "\\," ^ (exp_to_latex exp2) ^ ")"
-  | ExpRec (expvar1, exp2) -> " rec\\{ " ^ expvar1 ^ "=" ^ (exp_to_latex exp2) ^ " \\} "
+  | ExpAbs (x1, exp2) -> " (\\backslash " ^ x1 ^ "." ^ (latex_of_exp exp2) ^ ")"
+  | ExpApp (exp1, exp2) -> "(" ^ (latex_of_exp exp1) ^ "\\," ^ (latex_of_exp exp2) ^ ")"
+  | ExpRec (expvar1, exp2) -> " rec\\{ " ^ expvar1 ^ "=" ^ (latex_of_exp exp2) ^ " \\} "
   | _ -> ""(* todo: let *)
 
-let rec rules_to_latex rules = match rules with
+let rec latex_of_rules rules = match rules with
   | [] -> ""
-  | (ty1, ty2)::tl -> (type_to_latex ty1) ^ "=" ^ (type_to_latex ty2) ^ "," ^ (rules_to_latex tl)
+  | (ty1, ty2)::tl -> (latex_of_type ty1) ^ "=" ^ (latex_of_type ty2) ^ "," ^ (latex_of_rules tl)
 
 (* new *)
 (* expvar -> ty -> string *)
-let expvar_typing_to_latex expvar typing = expvar ^ " :\\langle " ^ (typing_to_latex typing) ^ " \\rangle, "
+let latex_of_expvar_typing expvar typing = expvar ^ " :\\langle " ^ (latex_of_typing typing) ^ " \\rangle, "
 (* todo: delete last comma *)
 
-let envD_to_latex envD = EnvD.fold (fun expvar typing string -> (expvar_typing_to_latex expvar typing)^string) envD ""
+let latex_of_envD envD = EnvD.fold (fun expvar typing string -> (latex_of_expvar_typing expvar typing)^string) envD ""
 
 (* cond -> string *)
-let condition_to_latex (envD, exp, typing) = 
-  (envD_to_latex envD) ^ " \\vdash " ^ (exp_to_latex exp) ^ ": \\langle " ^ (typing_to_latex typing) ^ " \\rangle "
+let latex_of_cond (envD, exp, typing) = 
+  (latex_of_envD envD) ^ " \\vdash " ^ (latex_of_exp exp) ^ ": \\langle " ^ (latex_of_typing typing) ^ " \\rangle "
 
 (* cond -> rules -> string *)
 let condition_rules_to_latex cond rules = 
-  (condition_to_latex cond) ^ " [" ^ (rules_to_latex rules) ^ "]"
+  (latex_of_cond cond) ^ " [" ^ (latex_of_rules rules) ^ "]"

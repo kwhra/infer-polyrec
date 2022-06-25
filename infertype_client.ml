@@ -28,5 +28,5 @@ setruleopt (print_string("[log option] input 0-don't show rules, 1-show rules: "
 setreccount (print_string("[rec time] input rec time k: ");int_of_string (read_line ()));
 (* you can infere the typing of the expression *)
 (* "print (typing environment) (expression)" *)
-print_string (condition_to_string (infertype testenvD testexp) ^ "\n");
+print_string (string_of_cond (infertype testenvD testexp) ^ "\n");
 output_string dstlog !inferlog

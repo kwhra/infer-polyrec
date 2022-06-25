@@ -12,63 +12,63 @@ open Subst
 (* make length=1 string *)
 (* 0->A, 1->B, ... *)
 (* 26->A again. *)
-let tyvar_to_string tyvar = String.make 1 (Char.chr ((Char.code 'A')+ (tyvar mod 26)))
+let string_of_tyvar tyvar = String.make 1 (Char.chr ((Char.code 'A')+ (tyvar mod 26)))
 
 (* ty -> string *)
-let rec type_to_string ty = match ty with
+let rec string_of_type ty = match ty with
   | TyCon tycon -> (match tycon with
                     | TyBool -> "Bool"
                     | TyUnit -> "Unit")
-  | TyVar tyvar -> tyvar_to_string tyvar
-  | TyArr (ty1, ty2) -> "(" ^ (type_to_string ty1) ^ " -> " ^ (type_to_string ty2) ^ ")" (* (A->B) *)
+  | TyVar tyvar -> string_of_tyvar tyvar
+  | TyArr (ty1, ty2) -> "(" ^ (string_of_type ty1) ^ " -> " ^ (string_of_type ty2) ^ ")" (* (A->B) *)
 
 (* expvar -> ty -> string *)
-let expvar_type_to_string expvar ty = expvar ^ ": " ^ (type_to_string ty) ^ ", "
+let string_of_expvar_and_type expvar ty = expvar ^ ": " ^ (string_of_type ty) ^ ", "
 (* task: delete last comma *)
 
 (* envU -> string *)
 (* without {} *)
-let envU_to_string envU = EnvU.fold (fun expvar ty string -> (expvar_type_to_string expvar ty)^string) envU ""
+let string_of_envU envU = EnvU.fold (fun expvar ty string -> (string_of_expvar_and_type expvar ty)^string) envU ""
 
 (* expvar -> ty -> string *)
-let tyvar_type_to_string tyvar ty = (tyvar_to_string tyvar) ^ " |-> " ^ (type_to_string ty) ^ ", "
+let string_of_tyvar_and_type tyvar ty = (string_of_tyvar tyvar) ^ " |-> " ^ (string_of_type ty) ^ ", "
 (* task: delete last comma *)
 
-let subst_to_string subst = Subst.fold (fun tyvar ty string -> (tyvar_type_to_string tyvar ty)^string) subst ""
+let string_of_subst subst = Subst.fold (fun tyvar ty string -> (string_of_tyvar_and_type tyvar ty)^string) subst ""
 
 (* typing -> string *)
-let typing_to_string typing = match typing with 
-  | (envU, ty) -> "{" ^ (envU_to_string envU) ^ "}; " ^ (type_to_string ty)  (* {x:u};u *)
+let string_of_typing typing = match typing with 
+  | (envU, ty) -> "{" ^ (string_of_envU envU) ^ "}; " ^ (string_of_type ty)  (* {x:u};u *)
 
-let expcon_to_string expcon = match expcon with
+let string_of_expcon expcon = match expcon with
   | Unit -> "unit"
   | Bool -> "bool"
   | Arth -> " + "
   | Ifc -> "Ifc"
 
-let rec exp_to_string exp = match exp with
-  | ExpCon c -> expcon_to_string c
+let rec string_of_exp exp = match exp with
+  | ExpCon c -> string_of_expcon c
   | ExpVar x -> x
-  | ExpAbs (x1, exp2) -> "(\\" ^ x1 ^ ". " ^ (exp_to_string exp2) ^ ")"
-  | ExpApp (exp1, exp2) -> "(" ^ (exp_to_string exp1) ^ " " ^ (exp_to_string exp2) ^ ")"
-  | ExpRec (expvar1, exp2) -> " rec{" ^ expvar1 ^ " = " ^ (exp_to_string exp2) ^ "}"
+  | ExpAbs (x1, exp2) -> "(\\" ^ x1 ^ ". " ^ (string_of_exp exp2) ^ ")"
+  | ExpApp (exp1, exp2) -> "(" ^ (string_of_exp exp1) ^ " " ^ (string_of_exp exp2) ^ ")"
+  | ExpRec (expvar1, exp2) -> " rec{" ^ expvar1 ^ " = " ^ (string_of_exp exp2) ^ "}"
   | _ -> "" (* todo *)
 
-let rec rules_to_string rules = match rules with
+let rec string_of_rules rules = match rules with
   | [] -> ""
-  | (ty1, ty2)::tl -> (type_to_string ty1) ^ " = " ^ (type_to_string ty2) ^ ", " ^ (rules_to_string tl)
+  | (ty1, ty2)::tl -> (string_of_type ty1) ^ " = " ^ (string_of_type ty2) ^ ", " ^ (string_of_rules tl)
 
 (* expvar -> ty -> string *)
-let expvar_typing_to_string expvar typing = expvar ^ ": <" ^ (typing_to_string typing) ^ ">, "
+let string_of_expvar_and_typing expvar typing = expvar ^ ": <" ^ (string_of_typing typing) ^ ">, "
 (* task: delete last comma *)
 
 (* envD -> string *)
-let envD_to_string envD = EnvD.fold (fun expvar typing string -> (expvar_typing_to_string expvar typing)^string) envD ""
+let string_of_envD envD = EnvD.fold (fun expvar typing string -> (string_of_expvar_and_typing expvar typing)^string) envD ""
 
 (* cond -> string *)
-let condition_to_string (envD, exp, typing) = 
-  (envD_to_string envD) ^ " |- " ^ (exp_to_string exp) ^ ": <" ^ (typing_to_string typing) ^ ">"
+let string_of_cond (envD, exp, typing) = 
+  (string_of_envD envD) ^ " |- " ^ (string_of_exp exp) ^ ": <" ^ (string_of_typing typing) ^ ">"
 
 (* cond -> rules -> string *)
-let condition_rules_to_string cond rules = 
-  (condition_to_string cond) ^ "\n where [" ^ (rules_to_string rules) ^ "]"
+let string_of_cond_and_rules cond rules = 
+  (string_of_cond cond) ^ "\n where [" ^ (string_of_rules rules) ^ "]"
