@@ -72,3 +72,21 @@ let string_of_cond (envD, exp, typing) =
 (* cond -> rules -> string *)
 let string_of_cond_and_rules cond rules = 
   (string_of_cond cond) ^ "\n where [" ^ (string_of_rules rules) ^ "]"
+
+(* condtree -> string *)
+let rec string_of_condtree condtree = 
+  (* cond tree = cond * (cond tree) list *)
+  let Node (cond, childs) = condtree in
+  let (envD, exp, typing) = cond in
+  match childs with
+  | [] -> 
+    (match exp with
+    | ExpVar _ -> "(Var)\n" 
+    | ExpCon _ -> "(Con)\n" 
+    | ExpAbs _ -> "(Abs)\n" 
+    | ExpApp _ -> "(App)\n" 
+    | ExpRec _ -> "(Rec)\n" 
+    | ExpLet _ -> "(Let)\n" )
+    ^ (string_of_cond cond) ^ "\n"
+  (* hd:cond tree, tl:cond tree list *)
+  | hd::tl -> (string_of_condtree hd) ^ (string_of_condtree (Node (cond, tl))) ^ "\n"
