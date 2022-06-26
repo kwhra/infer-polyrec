@@ -122,11 +122,14 @@ let apply_subst_to_cond subst cond =
   (apply_subst_to_envD subst envD, exp, apply_subst_to_typing subst typing)
 
 (* subst -> cond tree -> cond tree *)
-let apply_subst_to_condtree subst condtree =
+let rec apply_subst_to_condtree subst condtree =
   (* childs: cond tree list *)
   let Node (cond, childs) = condtree in
   match childs with
-  | []     -> ()
+  | [] -> Node (apply_subst_to_cond subst cond, [])
   (* hd: cond tree, tl: cond tree list *)
-  | hd::tl -> ()(* doing *)
+  | hd::tl -> 
+    let newhead = apply_subst_to_condtree subst hd in
+    let Node (newcond, newchilds) = apply_subst_to_condtree subst (Node (cond, tl)) in
+    Node (newcond, newhead::newchilds)
   

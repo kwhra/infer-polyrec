@@ -157,10 +157,10 @@ let rec make_condtree_and_rules envD exp =
           (tree, [])
     | _ -> (Node((EnvD.empty, exp, (EnvU.empty, TyCon TyUnit)), []), []) (* todo:let *)
 
-(* envD -> exp -> condtree, rules, cond *)
+(* envD -> exp -> condtree, rules, condtree *)
 let infertype envD exp =
   resetcounter();
     let (tree, rules) = make_condtree_and_rules envD exp in
-    let Node((envD1, _, typing), _) = tree in
       let subst = unify rules in
-      (tree, rules, (apply_subst_to_envD subst envD, exp, apply_subst_to_typing subst typing))
+      let newtree = apply_subst_to_condtree subst tree in
+      (tree, rules, newtree)

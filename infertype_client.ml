@@ -29,6 +29,6 @@ print_string ("[rec time] input rec time k: ");
 	setreccount (int_of_string (read_line ()));
 (* you can infere the typing of the expression *)
 (* "print (typing environment) (expression)" *)
-let (tree, rules, cond) = infertype testenvD testexp in
-print_string (string_of_cond cond ^ "\n");
+let (tree, rules, Node(cond, _)) = infertype testenvD testexp in
+print_string ((string_of_cond cond) ^ "\n");
 output_string dstlog (log_of_condtree tree)
