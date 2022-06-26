@@ -55,8 +55,8 @@ let setreccount k = reccount := k;()
 exception CannotInferType1
 exception CannotInferType2
 
-(* envD -> expression -> (infertree, rules) *)
-(* infertree = (envD, exp, typing) multitree *)
+(* envD -> expression -> (condtree, rules) *)
+(* condtree = Node of cond * (cond tree) list *)
 let rec make_condtree_and_rules envD exp = 
     match exp with
     (* var & var-P *)        
@@ -125,29 +125,42 @@ let rec make_condtree_and_rules envD exp =
           (tree, rules)
     (* rec-k *)
     | ExpRec (expvar1, exp2) -> 
-      (* int -> envD -> expvar -> typing -> exp -> unit *)
+      (* int -> envD -> expvar -> typing -> exp -> (cond tree list) *)
       let rec loop k envD expvar typing0 exp = 
         ( if k = 0 
             (* rec-p *)
             (* D,x:u|-rec x=e:u *)
-            then  let tree = Node((envD, exp, typing0), []) in
-                  (tree, [])
+            then
+              let cond = (envD, exp, typing0) in
+              let tree = Node(cond, []) in
+                [tree]
             (* rec-k k>=1 *)
             else
+              (* make condtree *)
+              (* [tree1; tree2; tree3; ...] *)
               let (tree1, rules1) = make_condtree_and_rules (EnvD.add expvar typing0 envD) exp in
-              let Node((envD1, _, typing1), _) = tree1 in
+              let Node((_, _, typing1'), _) = tree1 in
                 let subst = unify rules1 in
-                let typing1' = apply_subst_to_typing subst typing1 in
-                  loop (k-1) envD expvar typing1' exp
+                let typing1 = apply_subst_to_typing subst typing1' in
+                  (* [tree1; tree2; ...] *)
+                  tree1::(loop (k-1) envD expvar typing1 exp)
         ) in
-      let typing0 = ((envU_of_Bx (fvd_in_exp exp envD)), TyVar (getfleshtyvar ())) in
-        loop !reccount envD expvar1 typing0 exp2
+      (* condtree list -> condtree *)
+      let last_of list = List.hd (List.rev list) in
+        (* loop: ...-> (cond tree) list <= [tree1; tree2; ...] *)
+        (* what we want is last elmnt of the list *)
+        (* return Node(lst elm, list) *)
+        let typing0 = ((envU_of_Bx (fvd_in_exp exp envD)), TyVar (getfleshtyvar ())) in
+        let condtrees = loop !reccount envD expvar1 typing0 exp2 in
+        let Node((_, _, typingk), _) = last_of condtrees in
+          let tree = Node((envD, exp, typingk), condtrees) in
+          (tree, [])
     | _ -> (Node((EnvD.empty, exp, (EnvU.empty, TyCon TyUnit)), []), []) (* todo:let *)
 
-(* envD -> exp -> cond *)
+(* envD -> exp -> condtree, rules, cond *)
 let infertype envD exp =
   resetcounter();
-  let (tree, rules) = make_condtree_and_rules envD exp in
-  let Node((envD1, _, typing), _) = tree in
-    let subst = unify rules in
-      (envD, exp, apply_subst_to_typing subst typing)
+    let (tree, rules) = make_condtree_and_rules envD exp in
+    let Node((envD1, _, typing), _) = tree in
+      let subst = unify rules in
+      (tree, rules, (apply_subst_to_envD subst envD, exp, apply_subst_to_typing subst typing))

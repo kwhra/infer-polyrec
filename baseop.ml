@@ -86,9 +86,6 @@ let apply_subst_to_subst subst sub =
   (apply_subst_to_type subst) (* :ty -> ty *)
   sub
 
-let apply_subst_to_typing subst typing = match typing with (envU, ty) -> 
-                                ((apply_subst_to_envU subst envU), (apply_subst_to_type subst ty))
-
 (* sub -> sub -> sub *)
 let merge_subst sub1 sub2 =
   Subst.merge
@@ -102,7 +99,34 @@ let merge_subst sub1 sub2 =
     (apply_subst_to_subst sub2 sub1)
     (apply_subst_to_subst sub1 sub2)
 
+(* subst -> typing -> typing *)
+let apply_subst_to_typing subst typing = match typing with (envU, ty) -> 
+                                ((apply_subst_to_envU subst envU), (apply_subst_to_type subst ty))
+
 (* subst -> rules -> rules *)
-let rec apply_subst_to_rules subst c = match c with
+let rec apply_subst_to_rules subst rules = 
+  match rules with
   | [] -> []
-  | (ty1, ty2)::tl -> ((apply_subst_to_type subst ty1), (apply_subst_to_type subst ty2))::(apply_subst_to_rules subst tl)
+  (* rules = (ty * ty) list *)
+  | (ty1, ty2)::tl -> (apply_subst_to_type subst ty1, apply_subst_to_type subst ty2)::(apply_subst_to_rules subst tl)
+
+(* subst -> envD -> envD *)
+let apply_subst_to_envD subst envD = 
+  EnvD.map
+  (apply_subst_to_typing subst) (* :typing -> typing *)
+  envD
+
+(* subst -> cond -> cond *)
+let apply_subst_to_cond subst cond = 
+  let (envD, exp, typing) = cond in
+  (apply_subst_to_envD subst envD, exp, apply_subst_to_typing subst typing)
+
+(* subst -> cond tree -> cond tree *)
+let apply_subst_to_condtree subst condtree =
+  (* childs: cond tree list *)
+  let Node (cond, childs) = condtree in
+  match childs with
+  | []     -> ()
+  (* hd: cond tree, tl: cond tree list *)
+  | hd::tl -> ()(* doing *)
+  

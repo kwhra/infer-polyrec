@@ -66,5 +66,23 @@ let latex_of_cond (envD, exp, typing) =
   (latex_of_envD envD) ^ " \\vdash " ^ (latex_of_exp exp) ^ ": \\langle " ^ (latex_of_typing typing) ^ " \\rangle "
 
 (* cond -> rules -> string *)
-let condition_rules_to_latex cond rules = 
+let latex_of_cond_and_rules cond rules = 
   (latex_of_cond cond) ^ " [" ^ (latex_of_rules rules) ^ "]"
+
+(* condtree -> string *)
+let rec latex_of_condtree condtree = 
+  (* cond tree = cond * (cond tree) list *)
+  let Node (cond, childs) = condtree in
+  let (envD, exp, typing) = cond in
+  match childs with
+  | [] -> 
+    (match exp with
+    | ExpVar _ -> "(Var)\n" 
+    | ExpCon _ -> "(Con)\n" 
+    | ExpAbs _ -> "(Abs)\n" 
+    | ExpApp _ -> "(App)\n" 
+    | ExpRec _ -> "(Rec)\n" 
+    | ExpLet _ -> "(Let)\n" )
+    ^ (latex_of_cond cond) ^ "\n"
+  (* hd:cond tree, tl:cond tree list *)
+  | hd::tl -> (latex_of_condtree hd) ^ (latex_of_condtree (Node (cond, tl))) ^ "\n"

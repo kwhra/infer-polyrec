@@ -21,12 +21,14 @@ let dstlog =
 
 let () = 
 (* show log *)
-setinferlogopt (print_string("[print option] input 0-no log, 1-string, 2-latex: "); int_of_string(read_line()));
-(* show rules in log *)
-setruleopt (print_string("[log option] input 0-don't show rules, 1-show rules: "); int_of_string(read_line()));
+print_string ("[print option] input 1-string, 2-latex: "); 
+	let input =  int_of_string(read_line()) in
+ 	if input = 1 then set_string() else set_latex();
 (* you can change here the number k of rec *)
-setreccount (print_string("[rec time] input rec time k: ");int_of_string (read_line ()));
+print_string ("[rec time] input rec time k: ");
+	setreccount (int_of_string (read_line ()));
 (* you can infere the typing of the expression *)
 (* "print (typing environment) (expression)" *)
-print_string (string_of_cond (infertype testenvD testexp) ^ "\n");
-output_string dstlog !inferlog
+let (tree, rules, cond) = infertype testenvD testexp in
+print_string (string_of_cond cond ^ "\n");
+output_string dstlog (string_of_condtree tree)
