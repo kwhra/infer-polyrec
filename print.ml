@@ -76,6 +76,7 @@ let string_of_cond_and_rules cond rules =
 (* condtree -> string *)
 let rec string_of_condtree condtree = 
   (* cond tree = cond * (cond tree) list *)
+  (* print cond tree list first, then cond *)
   let Node (cond, childs) = condtree in
   let (envD, exp, typing) = cond in
   match childs with

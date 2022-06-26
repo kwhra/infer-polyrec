@@ -72,17 +72,18 @@ let latex_of_cond_and_rules cond rules =
 (* condtree -> string *)
 let rec latex_of_condtree condtree = 
   (* cond tree = cond * (cond tree) list *)
+  (* print cond tree list first, then cond *)
   let Node (cond, childs) = condtree in
   let (envD, exp, typing) = cond in
   match childs with
   | [] -> 
     (match exp with
-    | ExpVar _ -> "(Var)\n" 
-    | ExpCon _ -> "(Con)\n" 
-    | ExpAbs _ -> "(Abs)\n" 
-    | ExpApp _ -> "(App)\n" 
-    | ExpRec _ -> "(Rec)\n" 
-    | ExpLet _ -> "(Let)\n" )
-    ^ (latex_of_cond cond) ^ "\n"
-  (* hd:cond tree, tl:cond tree list *)
+    | ExpVar _ -> "\\AxiomC{}\n" ^ "\\RightLabel{(Var)}\n" ^ "\\UnaryInfC{ $"  ^ (latex_of_cond cond) ^ "$ }\n"
+    | ExpCon _ -> "\\AxiomC{}\n" ^ "\\RightLabel{(Con)}\n" ^ "\\UnaryInfC{ $"  ^ (latex_of_cond cond) ^ "$ }\n"
+    | ExpAbs _ ->                  "\\RightLabel{(Abs)}\n" ^ "\\UnaryInfC{ $"  ^ (latex_of_cond cond) ^ "$ }\n"
+    | ExpApp _ ->                  "\\RightLabel{(App)}\n" ^ "\\BinaryInfC{ $" ^ (latex_of_cond cond) ^ "$ }\n" 
+    | ExpRec _ -> "% Rec\n" ^ 
+                  "\\AxiomC{}\n" ^ "\\RightLabel{(Rec)}\n" ^ "\\UnaryInfC{ $" ^ (latex_of_cond cond) ^ "$ }\n"
+    | ExpLet _ -> ""(* todo *)
+  (* hd:cond tree, tl:cond tree list *))
   | hd::tl -> (latex_of_condtree hd) ^ (latex_of_condtree (Node (cond, tl))) ^ "\n"

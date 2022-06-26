@@ -31,4 +31,4 @@ print_string ("[rec time] input rec time k: ");
 (* "print (typing environment) (expression)" *)
 let (tree, rules, cond) = infertype testenvD testexp in
 print_string (string_of_cond cond ^ "\n");
-output_string dstlog (string_of_condtree tree)
+output_string dstlog (log_of_condtree tree)
