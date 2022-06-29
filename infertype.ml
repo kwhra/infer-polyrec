@@ -6,6 +6,7 @@ open Variable
 open Print
 open Print_latex
 open Baseop
+open Rename
 open Unify
 open Inferlog
 
@@ -26,26 +27,6 @@ let envU_of_Bx ls =
     (fun expvar envU -> EnvU.add expvar (TyVar (getfleshtyvar())) envU)
     ls
     EnvU.empty
-
-(* ty -> ty *)
-let rec rename ty = 
-  let renamecounter = ref 0 in
-  let getfleshrename () =
-    let temp = !renamecounter in
-    renamecounter := temp+1;temp in
-  (* ref of list of existing tyvars *)
-  let tyvarlist = ref [] in
-  (* ty -> subst *)
-  let rec makesubst ty0 = match ty0 with
-    | TyVar tyvar
-      -> if List.mem tyvar !tyvarlist
-          (* if tyvar exists, do nothing *)
-          then Subst.empty
-          (* if tyvar not exists, make subst *)
-          else Subst.singleton tyvar (TyVar (getfleshrename()))
-    | TyCon _ -> Subst.empty
-    | TyArr (ty1, ty2) -> merge_subst (makesubst ty1) (makesubst ty2)
-  in apply_subst_to_type (makesubst ty) ty
 
 (* ref int *)
 let reccount = ref 0

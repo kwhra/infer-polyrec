@@ -8,6 +8,7 @@ open Print_latex
 open Baseop
 open Unify
 open Inferlog
+open Rename
 open Infertype
 open Test
 
