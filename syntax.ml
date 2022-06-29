@@ -51,3 +51,8 @@ type 'a tree = Node of 'a * ('a tree list)
 (* (D, exp, ty) -- (D, exp, ty) *)
 (*              |- (D, exp, ty) *)                 
 type condtree = condition tree
+
+(* (condition, rules) tree *)
+(* (D, exp, ty),[rules] -  (D, exp, ty),[rules] *)
+(*                 |- (D, exp, ty),[rules] *) 
+type condruletree = (condition * rules) tree

@@ -87,3 +87,4 @@ let rec latex_of_condtree condtree =
     | ExpLet _ -> ""(* todo *)
   (* hd:cond tree, tl:cond tree list *))
   | hd::tl -> (latex_of_condtree hd) ^ (latex_of_condtree (Node (cond, tl))) ^ "\n"
+

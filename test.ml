@@ -58,6 +58,33 @@ let	expX	=	ExpVar	x
 let	expY	=	ExpVar	y
 let	expZ	=	ExpVar	z
 
+let	tyA	=	TyVar	0
+let	tyB	=	TyVar	1
+let	tyC	=	TyVar	2
+let	tyD	=	TyVar	3
+let	tyE	=	TyVar	4
+let	tyF	=	TyVar	5
+let	tyG	=	TyVar	6
+let	tyH	=	TyVar	7
+let	tyI	=	TyVar	8
+let	tyJ	=	TyVar	9
+let	tyK	=	TyVar	10
+let	tyL	=	TyVar	11
+let	tyM	=	TyVar	12
+let	tyN	=	TyVar	13
+let	tyO	=	TyVar	14
+let	tyP	=	TyVar	15
+let	tyQ	=	TyVar	16
+let	tyR	=	TyVar	17
+let	tyS	=	TyVar	18
+let	tyT	=	TyVar	19
+let	tyU	=	TyVar	20
+let	tyV	=	TyVar	21
+let	tyW	=	TyVar	22
+let	tyX	=	TyVar	23
+let	tyY	=	TyVar	24
+let	tyZ	=	TyVar	25
+
 (* example on paper *)
 (* rec{f = \gy.ifc false y g(fgy)} *)
 let appFG = ExpApp(expF, expG)

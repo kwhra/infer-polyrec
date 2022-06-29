@@ -8,13 +8,21 @@ OCAMLOPTFLAGS=$(INCLUDES) # add other options for ocamlopt here
 
 # make "infer"
 # infer type of testcase in test.ml 
-# The list of object files for "infer"
 PROG1_OBJS=syntax.cmo baseop.cmo variable.cmo print.cmo print_latex.cmo\
 					 unify.cmo inferlog.cmo infertype.cmo test.cmo infertype_client.cmo
 PROG1 = infer
 
+# make "rename"
+# rename type of testcase in rename_test.ml 
+PROG2_OBJS=syntax.cmo baseop.cmo variable.cmo print.cmo print_latex.cmo\
+					 unify.cmo inferlog.cmo infertype.cmo test.cmo rename_test.cmo
+PROG2 = rename
+
 $(PROG1): $(PROG1_OBJS)
 	$(OCAMLC) -o $@ $(OCAMLFLAGS) $(PROG1_OBJS)
+
+$(PROG2): $(PROG2_OBJS)
+	$(OCAMLC) -o $@ $(OCAMLFLAGS) $(PROG2_OBJS)
 
 # Common rules
 .SUFFIXES: .ml .cmo .cmi

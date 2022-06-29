@@ -12,7 +12,7 @@ open Infertype
 open Test
 
 (* input envD and exp to test infering type *)
-let testexp = exp2
+let testexp = exp0
 let testenvD = initD
 
 (* input destination of log *)
@@ -29,6 +29,7 @@ print_string ("[rec time] input rec time k: ");
 	setreccount (int_of_string (read_line ()));
 (* you can infere the typing of the expression *)
 (* "print (typing environment) (expression)" *)
-let (tree, rules, Node(cond, _)) = infertype testenvD testexp in
+let tree = infertype testenvD testexp in
+let Node(cond, _) = tree in
 print_string ((string_of_cond cond) ^ "\n");
 output_string dstlog (log_of_condtree tree)
