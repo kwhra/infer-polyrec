@@ -10,8 +10,6 @@ open Rename
 open Unify
 open Inferlog
 
-exception NotDefined
-
 (* type(c) : expcon -> ty *)
 let consttype_of c = match c with
   | Unit -> TyCon TyUnit
@@ -22,7 +20,7 @@ let consttype_of c = match c with
               TyArr(u, TyArr(u, u))
 
 (* expvar list -> typing *)
-let envU_of_Bx ls = 
+let typingBx ls = 
   let envU = 
   List.fold_right 
     (fun expvar envU -> EnvU.add expvar (TyVar (get_fleshtyvar())) envU)
@@ -36,8 +34,10 @@ let reccount = ref 0
 (* int -> unit *)
 let setreccount k = reccount := k;()
 
-exception CannotInferType1
-exception CannotInferType2
+exception ErrorInfertype1
+exception ErrorInfertype2
+exception ErrorInfertype3
+exception CannotInferWithK
 
 (* envD -> expression -> condrulestree *)
 (* condrulestree = Node ( (cond, rules), (condrulestree) list) *)
@@ -79,7 +79,7 @@ let rec make_condruletree envD exp =
                   (* |-e:<U,x:u0; u1> => |-\x.e:<U;u0->u1> *)
                   let cond = (envD1, exp, ((EnvU.remove x envU1), TyArr (u, ty1))) in
                     Node ((cond, rules1), [tree1])
-            else raise CannotInferType1
+            else raise ErrorInfertype1
       (* abs-vac *)
       (* |-e:<U;u1> => |-\x.e:<U;U0->u1>, u0=flesh *)
       else if not(is_in_D x envD) 
@@ -87,7 +87,7 @@ let rec make_condruletree envD exp =
                   (* |-e:<U;u1> => |-\x.e:<U;U0->u1>, u0=flesh *)
                   let cond = (envD1, exp, (envU1, TyArr (u, ty1))) in
                     Node ((cond, rules1), [tree1])
-            else raise CannotInferType2
+            else raise ErrorInfertype2
   (* app *)
   (* |-e1<U1;u1>, |-e2<U2;u2> => |-e1 e2:<U1+U2;u3>, u1=u2->u3, u3=flesh *)
   | ExpApp (exp1, exp2) ->
@@ -123,28 +123,48 @@ let rec make_condruletree envD exp =
             (* make condtree *)
             (* [tree1; tree2; tree3; ...] *)
             let tree1' = make_condruletree (EnvD.add expvar typing0 envD) exp in
-            let Node((_, rules1'), _) = tree1' in
+            let Node(((_, _, typing1'), rules1'), _) = tree1' in
               (* unify rules and apply to tree1' *)
               let subst = unify rules1' in
-              let tree1 = apply_subst_to_condrulestree subst tree1' in
-              let Node(((_, _, typing1'), _), _) = tree1 in
-                (* reflesh tyvar *)
-                let typing1 = rename_typing typing1' in
+              let typing1 = apply_subst_to_typing subst typing1' in
                 (* [tree1; tree2; ...] *)
                 (* add tree before subst. *)
                 tree1'::(loop (k-1) envD expvar typing1 exp)
       ) in
     (* condruletree list -> condruletree *)
     let last_of list = List.hd (List.rev list) in
-      (* loop: ...-> (cond tree) list = [tree1; tree2; ...] *)
-      (* what we want is last elmnt of the list *)
-      (* return Node(lst elm, list) *)
-      let typing0 = envU_of_Bx (fvd_in_exp exp envD) in
+    let second_last_of list = List.hd (List.tl (List.rev list)) in
+      (* store current tyvar *)
+      (* load after "ExpRec" *)
+      let typing0 = typingBx (fvd_in_exp exp envD) in
       let condtrees = loop !reccount envD expvar1 typing0 exp2 in
-      let Node(((_, _, typingk'), rulesk), _) = last_of condtrees in
-        let subst = unify rulesk in
-        let typingk = apply_subst_to_typing subst typingk' in
-        Node(((envD, exp, typingk), []), condtrees)
+      (* loop: ...-> (cond tree) list = [tree1; tree2; ...] *)
+      (* (typingk, k-1) is  (last, second-last) element of list *)
+      (* if typingk = typingk-1 then able to infer type *)
+        let treek = last_of condtrees in
+        let Node (((_, _, typingk'), rulesk), _) = treek in
+        let substk = unify rulesk in
+        let typingk = apply_subst_to_typing substk typingk' in
+          (match condtrees with
+          | [] -> raise ErrorInfertype3
+          (* if k = 1 *)
+          | [tree1] -> 
+            (* if typing0 = typing1 then able to infer type *)
+            if is_equal_typing typing0 typingk
+              then  let cond = (envD, exp, typingk) in
+                    Node((cond, []), condtrees)
+              else raise CannotInferWithK
+          (* otherwise: k>=2 *)
+          | _ -> 
+            (* denote typingk-1 as typingkk *)
+            let treekk = second_last_of condtrees in
+            let Node (((_, _, typingkk'), ruleskk), _) = treekk in
+            let substkk = unify ruleskk in
+            let typingkk = apply_subst_to_typing substkk typingkk' in
+              if is_equal_typing typingk typingkk
+                then  let cond = (envD, exp, typingk) in
+                      Node((cond, []), condtrees) 
+                else raise CannotInferWithK)
   | _ -> Node(((EnvD.empty, exp, (EnvU.empty, TyCon TyUnit)), []), []) (* todo:let *)
 
 (* envD -> exp -> condtree, rules, condtree *)

@@ -5,15 +5,24 @@ open EnvU
 open EnvD
 open Subst
 
-(* () -> tyvar*)
 (* reference: https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/class/isle4-06w/text/miniml011.html *)
-let counter = ref 0
+let tyvar_counter = ref 0
+
+(* unit -> tyvar *)
+(* get current tyvar, then increment *)
 let get_fleshtyvar () = 
-  let value = !counter in
-    (counter := value+1;value)
+  let value = !tyvar_counter in
+    (tyvar_counter := value+1;value)
+
+(* unit -> tyvar *)
+(* just get current tyvar *)
+let get_current_tyvar () = !tyvar_counter
+
+(* tyvar -> unit *)
+let set_current_tyvar tyvar = tyvar_counter := tyvar
 
 (* unit -> unit *)
-let reset_counter () = counter := 0;()
+let reset_counter () = tyvar_counter := 0
 
 
 (* 'a -> 'a list -> 'a list *)
