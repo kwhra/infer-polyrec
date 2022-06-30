@@ -18,6 +18,7 @@ let consttype_of c = match c with
               TyArr(TyCon TyBool, TyArr(u, TyArr(u, u)))
   | Arth -> let u = TyVar (get_fleshtyvar()) in
               TyArr(u, TyArr(u, u))
+  | Num -> TyCon TyNum
 
 (* expvar list -> typing *)
 let typingBx ls = 
@@ -199,15 +200,33 @@ let rec make_condrulestree envD exp =
     let (envD3, _, (envU3, ty3)) = cond3 in
       (* u2 = u *)
       let rule = (ty2, EnvU.find expvar envU3) in
+      let rules23 = (rules_of_samekey_in envU2 envU3) in
       let cond = (merge_envD envD2 envD3, exp, (merge_envU envU2 envU3, ty3)) in
-      Node ((cond, rule::(rules2@rules3)), [tree2;tree3])
+      Node ((cond, rule::(rules2@rules3@rules23)), [tree2;tree3])
+  (* Eq *)
+  (* e:num e:num => e=e:bool *)
+  | ExpEq (exp1, exp2) ->
+    (* |-e1<U1;u1> *)
+    let tree1 = make_condrulestree envD exp1 in
+    let Node((cond1, rules1), _) = tree1 in
+    let (envD1, _, (envU1, ty1)) = cond1 in
+    (* |-e2<U2;u2> *)
+    let tree2 = make_condrulestree envD exp2 in
+    let Node((cond2, rules2), _) = tree2 in
+    let (envD2, _, (envU2, ty2)) = cond2 in
+      let rules12 = rules_of_samekey_in envU1 envU2 in
+      let rules = [(ty1, TyCon TyNum);(ty2, TyCon TyNum)] in
+        let cond = (merge_envD envD1 envD2, exp, (merge_envU envU1 envU2, TyCon TyBool)) in
+        Node ((cond, rules@rules12@rules1@rules2), [tree1;tree2])
+      
+
 
 
 (* cond rules tree -> cond tree *)
 let unifiedcondtree_of condrulestree =
   (* condrulestree -> condrulestree *)
   let rec specify_rectree crtree = 
-    let Node (node, childs) = condrulestree in
+    let Node (node, childs) = crtree in
     let ((_, exp, _), _) = node in
     match exp with
     | ExpRec _ ->

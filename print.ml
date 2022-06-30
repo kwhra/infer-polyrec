@@ -18,7 +18,8 @@ let string_of_tyvar tyvar = string_of_int (tyvar)
 let rec string_of_type ty = match ty with
   | TyCon tycon -> (match tycon with
                     | TyBool -> "Bool"
-                    | TyUnit -> "Unit")
+                    | TyUnit -> "Unit"
+                    | TyNum -> "Num")
   | TyVar tyvar -> string_of_tyvar tyvar
   | TyArr (ty1, ty2) -> "(" ^ (string_of_type ty1) ^ " -> " ^ (string_of_type ty2) ^ ")" (* (A->B) *)
 
@@ -43,6 +44,7 @@ let string_of_typing typing = match typing with
 let string_of_expcon expcon = match expcon with
   | Unit -> "unit"
   | Bool -> "bool"
+  | Num -> "0"
   | Arth -> " + "
   | Ifc -> "Ifc"
 
@@ -52,7 +54,8 @@ let rec string_of_exp exp = match exp with
   | ExpAbs (x1, exp2) -> "(\\" ^ x1 ^ ". " ^ (string_of_exp exp2) ^ ")"
   | ExpApp (exp1, exp2) -> "(" ^ (string_of_exp exp1) ^ " " ^ (string_of_exp exp2) ^ ")"
   | ExpRec (expvar1, exp2) -> " rec{" ^ expvar1 ^ " = " ^ (string_of_exp exp2) ^ "}"
-  | ExpLet (expvar1, exp2, exp3) -> " let " ^ expvar1 ^ " = " ^  (string_of_exp exp2) ^ " in " ^ (string_of_exp exp3)
+  | ExpLet (expvar1, exp2, exp3) -> " let{" ^ expvar1 ^ " = " ^  (string_of_exp exp2) ^ "} in " ^ (string_of_exp exp3)
+  | ExpEq (exp1, exp2) -> (string_of_exp exp1) ^ "=" ^ (string_of_exp exp2) 
 
 let rec string_of_rules rules = match rules with
   | [] -> ""
@@ -87,7 +90,8 @@ let rec string_of_condtree condtree =
     | ExpAbs _ -> "(Abs)\n" 
     | ExpApp _ -> "(App)\n" 
     | ExpRec _ -> "(Rec)\n" 
-    | ExpLet _ -> "(Let)\n" )
+    | ExpLet _ -> "(Let)\n" 
+    | ExpEq _ -> "(Eq)\n")
     ^ (string_of_cond cond) ^ "\n"
   (* hd:cond tree, tl:cond tree list *)
   | hd::tl -> (string_of_condtree hd) ^ (string_of_condtree (Node (cond, tl))) ^ "\n"

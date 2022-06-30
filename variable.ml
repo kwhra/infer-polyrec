@@ -34,11 +34,12 @@ let rec delete elm ls = match ls with
 (* expression -> expvar list *)
 let rec fvs_in_exp exp = match exp with
   | ExpVar x -> [x]
-  | ExpCon _ -> []
   | ExpAbs (x, exp1) -> delete x (fvs_in_exp exp1)
   | ExpApp (exp1, exp2) -> (fvs_in_exp exp1) @ (fvs_in_exp exp2) 
   | ExpRec (expvar, exp2) -> delete expvar (fvs_in_exp exp2)
   | ExpLet (expvar, exp2, exp3) -> (fvs_in_exp exp2)@(delete expvar (fvs_in_exp exp3))
+  | ExpEq (exp1, exp2) -> (fvs_in_exp exp1) @ (fvs_in_exp exp2) 
+  | _ -> []
 
 (* expvar -> expression -> bool *)
 let is_fv_in_exp x exp = List.mem x (fvs_in_exp exp)

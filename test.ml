@@ -119,6 +119,15 @@ let exp3'' = ExpApp(ExpApp(ExpApp(ExpCon Ifc, ExpCon Bool), expY), exp3''')
 let exp3' = ExpAbs(g, ExpAbs(h, ExpAbs(h', ExpAbs(h'', ExpAbs(y, exp3'')))))
 let exp3 = ExpRec(f, exp3')
 
+let f' = "f'"
+let expF' = ExpVar f'
+let exp17true = ExpApp(expG, expX)
+let exp17false11 = ExpAbs(y, ExpAbs(h, ExpApp(expG, ExpApp(expH, expY))))
+let exp17false1 = ExpApp(ExpApp(expF, expF'), exp17false11)
+let exp17false = ExpApp(ExpApp(ExpApp(exp17false1, ExpCon Num), ExpVar x), ExpVar f')
+let exp17'' = ExpApp(ExpApp(ExpApp(ExpCon Ifc, ExpEq(ExpVar n, ExpCon Num)), exp17true), exp17false)
+let exp17' = ExpAbs(f', ExpAbs(g, ExpAbs(n, ExpAbs(x, exp17''))))
+let exp17 = ExpRec(f, exp17')
 
 
 let initD = EnvD.empty

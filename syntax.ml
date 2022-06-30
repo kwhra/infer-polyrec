@@ -6,6 +6,7 @@ type expcon =
   | Unit
   | Bool
   | Ifc
+  | Num
   | Arth
 
 type expression =
@@ -15,6 +16,7 @@ type expression =
   | ExpApp of expression * expression
   | ExpRec of expvar * expression
   | ExpLet of expvar * expression * expression
+  | ExpEq of expression * expression
 
 (* definitions of type *)
 (* type = const, var, unit, arrow *)
@@ -23,6 +25,7 @@ type tyvar = int
 type tycon = 
   | TyBool
   | TyUnit
+  | TyNum
   
 type ty = 
   | TyCon of tycon
