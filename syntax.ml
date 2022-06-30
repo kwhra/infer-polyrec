@@ -18,7 +18,7 @@ type expression =
 
 (* definitions of type *)
 (* type = const, var, unit, arrow *)
-type tyvar = int (* 0=A, 1=B, 2=C, ... *)
+type tyvar = int 
 
 type tycon = 
   | TyBool
@@ -67,7 +67,7 @@ let rec map_to_tree func sometree =
     let newhead = map_to_tree func hd in
     let Node (newsome, newtl) = map_to_tree func (Node(some, tl)) in
     Node (newsome, newhead::newtl)
-    
+
 (* ('a -> 'b -> 'b) -> 'a tree -> 'b -> 'b *)
 (* func:'a -> 'b -> 'b, tree:'a tree, init:'b *)
 let rec fold_tree func tree init = 

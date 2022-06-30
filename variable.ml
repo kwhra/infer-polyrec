@@ -38,7 +38,7 @@ let rec fvs_in_exp exp = match exp with
   | ExpAbs (x, exp1) -> delete x (fvs_in_exp exp1)
   | ExpApp (exp1, exp2) -> (fvs_in_exp exp1) @ (fvs_in_exp exp2) 
   | ExpRec (expvar, exp2) -> delete expvar (fvs_in_exp exp2)
-  | ExpLet (x, exp2, exp3) -> [](* doing *)
+  | ExpLet (expvar, exp2, exp3) -> (fvs_in_exp exp2)@(delete expvar (fvs_in_exp exp3))
 
 (* expvar -> expression -> bool *)
 let is_fv_in_exp x exp = List.mem x (fvs_in_exp exp)

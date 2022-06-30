@@ -24,7 +24,7 @@ let merge_envD envD1 envD2 =
   EnvD.merge 
     (fun _ typing1 typing2 -> 
       match typing1, typing2 with
-      | Some x, Some y -> Some x (* todo *)
+      | Some x, Some y -> Some x
       | Some x, None -> Some x
       | None, Some y -> Some y
       | None, None -> None) 

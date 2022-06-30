@@ -52,7 +52,7 @@ let rec string_of_exp exp = match exp with
   | ExpAbs (x1, exp2) -> "(\\" ^ x1 ^ ". " ^ (string_of_exp exp2) ^ ")"
   | ExpApp (exp1, exp2) -> "(" ^ (string_of_exp exp1) ^ " " ^ (string_of_exp exp2) ^ ")"
   | ExpRec (expvar1, exp2) -> " rec{" ^ expvar1 ^ " = " ^ (string_of_exp exp2) ^ "}"
-  | _ -> "" (* todo *)
+  | ExpLet (expvar1, exp2, exp3) -> " let " ^ expvar1 ^ " = " ^  (string_of_exp exp2) ^ " in " ^ (string_of_exp exp3)
 
 let rec string_of_rules rules = match rules with
   | [] -> ""

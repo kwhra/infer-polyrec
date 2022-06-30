@@ -47,8 +47,8 @@ let rec latex_of_exp exp = match exp with
   | ExpVar x -> x
   | ExpAbs (x1, exp2) -> " (\\backslash " ^ x1 ^ "." ^ (latex_of_exp exp2) ^ ")"
   | ExpApp (exp1, exp2) -> "(" ^ (latex_of_exp exp1) ^ "\\," ^ (latex_of_exp exp2) ^ ")"
-  | ExpRec (expvar1, exp2) -> " rec\\{ " ^ expvar1 ^ "=" ^ (latex_of_exp exp2) ^ " \\} "
-  | _ -> ""(* todo: let *)
+  | ExpRec (expvar1, exp2) -> " \\mathrm{rec}\\{ " ^ expvar1 ^ "=" ^ (latex_of_exp exp2) ^ " \\} "
+  | ExpLet (expvar1, exp2, exp3) -> " \\mathrm{let}\\, " ^ expvar1 ^ "=" ^ (latex_of_exp exp2) ^ "\\,\\mathrm{in}\\," ^ (latex_of_exp exp3)
 
 let rec latex_of_rules rules = match rules with
   | [] -> ""
@@ -84,7 +84,7 @@ let rec latex_of_condtree condtree =
     | ExpApp _ ->                  "\\RightLabel{(App)}\n" ^ "\\BinaryInfC{ $" ^ (latex_of_cond cond) ^ "$ }\n" 
     | ExpRec _ -> "% Rec\n" ^ 
                   "\\AxiomC{}\n" ^ "\\RightLabel{(Rec)}\n" ^ "\\UnaryInfC{ $" ^ (latex_of_cond cond) ^ "$ }\n"
-    | ExpLet _ -> ""(* todo *)
+    | ExpLet _ ->                  "\\RightLabel{(Let)}\n" ^ "\\BinaryInfC{ $" ^ (latex_of_cond cond) ^ "$ }\n"
   (* hd:cond tree, tl:cond tree list *))
   | hd::tl -> (latex_of_condtree hd) ^ (latex_of_condtree (Node (cond, tl))) ^ "\n"
 

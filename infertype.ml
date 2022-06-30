@@ -185,7 +185,23 @@ let rec make_condrulestree envD exp =
                 then  let cond = (envD, exp, typingk) in
                       Node((cond, []), condtrees) 
                 else recML envD expvar1 exp2 )
-  | _ -> Node(((EnvD.empty, exp, (EnvU.empty, TyCon TyUnit)), []), []) (* todo:let *)
+  (* Let *)
+  (* D|-e2:<U2;u2>, D|-e3:<U3,x:u;u3> (u2 = u)*)
+  (* => D|-let x=e2 in e3:<U;u3> *)
+  | ExpLet (expvar, exp2, exp3) ->
+    (* |-e2<U2;u2> *)
+    let tree2 = make_condrulestree envD exp2 in
+    let Node((cond2, rules2), _) = tree2 in
+    let (envD2, _, (envU2, ty2)) = cond2 in
+    (* |-e3<U3;u3> *)
+    let tree3 = make_condrulestree envD exp3 in
+    let Node((cond3, rules3), _) = tree3 in
+    let (envD3, _, (envU3, ty3)) = cond3 in
+      (* u2 = u *)
+      let rule = (ty2, EnvU.find expvar envU3) in
+      let cond = (merge_envD envD2 envD3, exp, (merge_envU envU2 envU3, ty3)) in
+      Node ((cond, rule::(rules2@rules3)), [tree2;tree3])
+
 
 (* cond rules tree -> cond tree *)
 let unifiedcondtree_of condrulestree =
