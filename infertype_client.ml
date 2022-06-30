@@ -17,8 +17,10 @@ let testexp = exp0
 let testenvD = initD
 
 (* input destination of log *)
-let dstlog = 
+let dst_log = 
 	open_out "infer.log"
+let dst_log_unified = 
+	open_out "infer_unified.log"
 
 let () = 
 (* show log *)
@@ -30,7 +32,8 @@ print_string ("[rec time] input rec time k: ");
 	setreccount (int_of_string (read_line ()));
 (* you can infere the typing of the expression *)
 (* "print (typing environment) (expression)" *)
-let tree = infertype testenvD testexp in
-let Node(cond, _) = tree in
+let (tree, unifiedtree) = infertype testenvD testexp in
+let Node(cond, _) = unifiedtree in
 print_string ((string_of_cond cond) ^ "\n");
-output_string dstlog (log_of_condtree tree)
+output_string dst_log (log_of_condtree tree);
+output_string dst_log_unified (log_of_condtree unifiedtree)

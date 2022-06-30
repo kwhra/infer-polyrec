@@ -43,11 +43,11 @@ let is_equal_typing typing1 typing2 =
 exception ErrorInfertype1
 exception ErrorInfertype2
 exception ErrorInfertype3
-exception CannotInferWithK
+exception CannotInferTyping
 
 (* envD -> expression -> condrulestree *)
 (* condrulestree = Node ( (cond, rules), (condrulestree) list) *)
-let rec make_condruletree envD exp = 
+let rec make_condrulestree envD exp = 
   match exp with
   (* var & var-P *)        
   | ExpVar x -> 
@@ -74,7 +74,7 @@ let rec make_condruletree envD exp =
   (* abs, abs-vac *)
   | ExpAbs (x, exp1) ->
     (* |-e:<U,x:u0; u1> => *)
-    let tree1 = make_condruletree envD exp1 in
+    let tree1 = make_condrulestree envD exp1 in
     let Node ((cond1, rules1), _) = tree1 in
     let (envD1, _, (envU1, ty1)) = cond1 in
     if is_fv_in_exp x exp1 
@@ -98,11 +98,11 @@ let rec make_condruletree envD exp =
   (* |-e1<U1;u1>, |-e2<U2;u2> => |-e1 e2:<U1+U2;u3>, u1=u2->u3, u3=flesh *)
   | ExpApp (exp1, exp2) ->
     (* |-e1<U1;u1> *)
-    let tree1 = make_condruletree envD exp1 in
+    let tree1 = make_condrulestree envD exp1 in
     let Node((cond1, rules1), _) = tree1 in
     let (envD1, _, (envU1, ty1)) = cond1 in
     (* |-e2<U2;u2> *)
-    let tree2 = make_condruletree envD exp2 in
+    let tree2 = make_condrulestree envD exp2 in
     let Node((cond2, rules2), _) = tree2 in
     let (envD2, _, (envU2, ty2)) = cond2 in
       (* prepare new tyvar and type (exp1 exp2) as newtyvar.  *)
@@ -128,7 +128,7 @@ let rec make_condruletree envD exp =
           else
             (* make condtree *)
             (* [tree1; tree2; tree3; ...] *)
-            let tree1' = make_condruletree (EnvD.add expvar typing0 envD) exp in
+            let tree1' = make_condrulestree (EnvD.add expvar typing0 envD) exp in
             let Node(((_, _, typing1'), rules1'), _) = tree1' in
               (* unify rules and apply to tree1' *)
               let subst = unify rules1' in
@@ -136,10 +136,23 @@ let rec make_condruletree envD exp =
                 (* [tree1; tree2; ...] *)
                 (* add tree before subst. *)
                 tree1'::(loop (k-1) envD expvar typing1 exp)
-      ) in
+      )
+    in
     (* condruletree list -> condruletree *)
     let last_of list = List.hd (List.rev list) in
     let second_last_of list = List.hd (List.tl (List.rev list)) in
+    (* Rec-ML *)
+    (* envD -> expvar -> exp -> condrulestree *)
+    (* D|-e:<U,x:u; u> => D|-rec{x=e}:<U;u> *)
+    let recML d x e = 
+      let condtree = make_condrulestree d e in
+      let Node(((_, _, (envU', ty')), rules), _) = condtree in
+      let rule = (EnvU.find x envU', ty') in
+      let subst = unify (rule::rules) in
+      let (envU, ty) = apply_subst_to_typing subst (envU', ty') in
+      let cond = (d, ExpRec(x, e), (EnvU.remove x envU, ty)) in
+          Node ((cond, []), [condtree])
+    in
       (* store current tyvar *)
       (* load after "ExpRec" *)
       let typing0 = typingBx (fvd_in_exp exp envD) in
@@ -159,7 +172,8 @@ let rec make_condruletree envD exp =
             if is_equal_typing typing0 typingk
               then  let cond = (envD, exp, typingk) in
                     Node((cond, []), condtrees)
-              else raise CannotInferWithK
+              (* Rec-ML *)
+              else recML envD expvar1 exp2 
           (* otherwise: k>=2 *)
           | _ -> 
             (* denote typingk-1 as typingkk *)
@@ -170,14 +184,39 @@ let rec make_condruletree envD exp =
               if is_equal_typing typingk typingkk
                 then  let cond = (envD, exp, typingk) in
                       Node((cond, []), condtrees) 
-                else raise CannotInferWithK)
+                else recML envD expvar1 exp2 )
   | _ -> Node(((EnvD.empty, exp, (EnvU.empty, TyCon TyUnit)), []), []) (* todo:let *)
 
-(* envD -> exp -> condtree, rules, condtree *)
+(* cond rules tree -> cond tree *)
+let unifiedcondtree_of condrulestree =
+  (* condrulestree -> condrulestree *)
+  let rec specify_rectree crtree = 
+    let Node (node, childs) = condrulestree in
+    let ((_, exp, _), _) = node in
+    match exp with
+    | ExpRec _ ->
+      let newchilds = 
+        List.map
+          (* condrulestree -> condrulestree *)
+          ( fun tree ->
+              let Node (((d, e, t), r), c) = tree in
+              let subst = unify r in
+              apply_subst_to_condrulestree subst tree )
+          childs
+      in
+      Node (node, newchilds)
+    | _ -> 
+      let newchilds = List.map specify_rectree childs in
+      Node (node, newchilds)
+  in
+    let newtree' = specify_rectree condrulestree in
+    let Node((cond, rules), _) = newtree' in
+    let subst = unify rules in
+    let newtree = apply_subst_to_condrulestree subst newtree' in
+    removerules newtree
+
+(* envD -> exp -> condrulestree, condtree *)
 let infertype envD exp =
   reset_counter();
-    let tree' = make_condruletree envD exp in
-      let Node ((_, rules), _) = tree' in
-      let subst = unify rules in
-      let tree = apply_subst_to_condrulestree subst tree' in
-        removerules tree
+    let condrulestree = make_condrulestree envD exp in
+      (removerules condrulestree, unifiedcondtree_of condrulestree)
