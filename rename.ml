@@ -1,3 +1,6 @@
+(* rename ty, envU, ... *)
+(* B->B => A->A, X->Y => A->B, Y->X => X->Y *)
+
 open Syntax
 open EnvU
 open EnvD
@@ -49,22 +52,27 @@ let rec apply_subst_to_tyf subst tyf =
 		TyfArr (apply_subst_to_tyf subst tyf1, apply_subst_to_tyf subst tyf2)
 
 (* substlist -> tyf -> tyf *)
-let rec apply_substlist substlist tyf =(* doing *)
+let rec apply_substlist_to_tyf substlist tyf =
 	match substlist with
 	| []     -> tyf
-	| hd::tl -> apply_substlist tl (apply_subst_to_tyf hd tyf)
+	| hd::tl -> apply_substlist_to_tyf tl (apply_subst_to_tyf hd tyf)
 
-(* ref tyvar *)
-let renamecounter = ref 0 
+(* substlist -> ty -> ty *)
+let apply_substlist_to_ty substlist ty = 
+	let tyf' = tyf_of_type ty in
+	let tyf = apply_substlist_to_tyf substlist tyf' in
+	 ty_of_tyf tyf
 
-(* unit -> tyvar *)
-(* return current renamecounter, and increment ref of it *)
-let get_fleshrename () =
-	let temp = !renamecounter in
-	renamecounter := temp+1;temp
+(* envU -> substlist -> envU *)
+let apply_substlist_to_envU substlist envU = 
+	EnvU.map
+		(fun ty -> apply_substlist_to_ty substlist ty)
+		envU
 
-(* unit -> unit *)
-let reset_renamecounter () = renamecounter := 0
+(* typing -> substlist -> typing *)
+let apply_substlist_to_typing substlist typing = 
+	let (envU, ty) = typing in
+		(apply_substlist_to_envU substlist envU, apply_substlist_to_ty substlist ty)
 
 (* ref of list of existing tyvars *)
 let tyvarlist = ref []
@@ -78,25 +86,30 @@ let add_tyvarlist tyvar =
 let reset_tyvarlist () = tyvarlist := []
 
 (* ty -> subst list *)
-let rec make_substlist ty = 
-	match ty with
-	| TyCon tycon -> []
-	| TyVar tyvar -> 
-		if List.mem tyvar !tyvarlist 
-			then []
-			else  (add_tyvarlist tyvar;[Subst.singleton tyvar (TyVar (get_fleshrename ()))])
-	| TyArr (ty1, ty2) ->
-		let list1 = make_substlist ty1 in
-		let list2 = make_substlist ty2 in
-		list1@list2
-
-(* ty -> ty *)
-let rename ty = 
-	reset_renamecounter();
+(* rename with current flesh tyvar *)
+let renamesubstlist_of_ty ty = 
+	(* ty -> subst list *)
+	let rec renamesubstlist_of_ty_loop ty0 = 
+		match ty0 with
+		| TyCon tycon -> []
+		| TyVar tyvar -> 
+			if List.mem tyvar !tyvarlist 
+				then []
+				else  (add_tyvarlist tyvar;[Subst.singleton tyvar (TyVar (get_fleshtyvar ()))])
+		| TyArr (ty1, ty2) ->
+			let list1 = renamesubstlist_of_ty_loop ty1 in
+			let list2 = renamesubstlist_of_ty_loop ty2 in
+			list1@list2
+	in
 	reset_tyvarlist();
-	let substlist = make_substlist ty in
-	let tyf' = tyf_of_type ty in
-	let tyf = apply_substlist substlist tyf' in
-		ty_of_tyf tyf
-	
-  
+	renamesubstlist_of_ty_loop ty
+
+let rename_type ty = 
+	let substlist = renamesubstlist_of_ty ty in
+	apply_substlist_to_ty substlist ty
+
+(* (envU, ty) -> (envU, ty) *)
+let rename_typing typing = 
+	let (envU, ty) = typing in
+	let substlist = renamesubstlist_of_ty ty in
+	(apply_substlist_to_envU substlist envU, apply_substlist_to_ty substlist ty)

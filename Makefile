@@ -12,10 +12,17 @@ PROG1_OBJS=syntax.cmo baseop.cmo variable.cmo print.cmo print_latex.cmo\
 					 unify.cmo inferlog.cmo rename.cmo infertype.cmo test.cmo infertype_client.cmo
 PROG1 = infer
 
-PROGS = $(PROG1)
+PROG2_OBJS=syntax.cmo baseop.cmo variable.cmo print.cmo print_latex.cmo\
+					 unify.cmo inferlog.cmo rename.cmo test.cmo rename_client.cmo
+PROG2 = rename
+
+PROGS = $(PROG1) $(PROG2)
 
 $(PROG1): $(PROG1_OBJS)
 	$(OCAMLC) -o $@ $(OCAMLFLAGS) $(PROG1_OBJS)
+
+$(PROG2): $(PROG2_OBJS)
+	$(OCAMLC) -o $@ $(OCAMLFLAGS) $(PROG2_OBJS)
 
 # Common rules
 .SUFFIXES: .ml .cmo .cmi

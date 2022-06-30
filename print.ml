@@ -12,7 +12,7 @@ open Subst
 (* make length=1 string *)
 (* 0->A, 1->B, ... *)
 (* 26->A again. *)
-let string_of_tyvar tyvar = String.make 1 (Char.chr ((Char.code 'A')+ (tyvar mod 26)))
+let string_of_tyvar tyvar = string_of_int (tyvar)
 
 (* ty -> string *)
 let rec string_of_type ty = match ty with

@@ -8,12 +8,12 @@ open Subst
 (* () -> tyvar*)
 (* reference: https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/class/isle4-06w/text/miniml011.html *)
 let counter = ref 0
-let getfleshtyvar () = 
+let get_fleshtyvar () = 
   let value = !counter in
     (counter := value+1;value)
 
 (* unit -> unit *)
-let resetcounter () = counter := 0;()
+let reset_counter () = counter := 0;()
 
 
 (* 'a -> 'a list -> 'a list *)

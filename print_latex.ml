@@ -8,7 +8,7 @@ open Subst
    typing = {envU}, A 
    print typing = <typing> *)
 
-let latex_of_tyvar tyvar = String.make 1 (Char.chr ((Char.code 'A')+ (tyvar mod 26)))
+let latex_of_tyvar tyvar = string_of_int (tyvar)
 
 (* ty -> string *)
 let rec latex_of_type ty = match ty with

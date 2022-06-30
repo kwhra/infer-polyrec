@@ -16,17 +16,20 @@ exception NotDefined
 let consttype_of c = match c with
   | Unit -> TyCon TyUnit
   | Bool -> TyCon TyBool
-  | Ifc -> let u = TyVar (getfleshtyvar()) in
+  | Ifc -> let u = TyVar (get_fleshtyvar()) in
               TyArr(TyCon TyBool, TyArr(u, TyArr(u, u)))
-  | Arth -> let u = TyVar (getfleshtyvar()) in
+  | Arth -> let u = TyVar (get_fleshtyvar()) in
               TyArr(u, TyArr(u, u))
 
-(* expvar list -> envU *)
+(* expvar list -> typing *)
 let envU_of_Bx ls = 
+  let envU = 
   List.fold_right 
-    (fun expvar envU -> EnvU.add expvar (TyVar (getfleshtyvar())) envU)
+    (fun expvar envU -> EnvU.add expvar (TyVar (get_fleshtyvar())) envU)
     ls
     EnvU.empty
+  in
+  (envU, (TyVar (get_fleshtyvar())))
 
 (* ref int *)
 let reccount = ref 0
@@ -52,7 +55,7 @@ let rec make_condruletree envD exp =
               Node (condrule, [])
       (* var-P: base case *)
       (* |-x:<x:u;u> *)
-      else  let u = TyVar (getfleshtyvar()) in
+      else  let u = TyVar (get_fleshtyvar()) in
             (* "no condition" => D|-x:<x:u;u> *)
             let condrule = ((envD, exp, (EnvU.singleton x u, u)), []) in
               Node (condrule, [])
@@ -80,7 +83,7 @@ let rec make_condruletree envD exp =
       (* abs-vac *)
       (* |-e:<U;u1> => |-\x.e:<U;U0->u1>, u0=flesh *)
       else if not(is_in_D x envD) 
-            then  let u = TyVar (getfleshtyvar ()) in
+            then  let u = TyVar (get_fleshtyvar ()) in
                   (* |-e:<U;u1> => |-\x.e:<U;U0->u1>, u0=flesh *)
                   let cond = (envD1, exp, (envU1, TyArr (u, ty1))) in
                     Node ((cond, rules1), [tree1])
@@ -100,7 +103,7 @@ let rec make_condruletree envD exp =
       (* ex) exp1:ty1, exp2:ty2 => exp1 exp2: ty. [ty1=ty2->ty] *)
       (* if typing assumptions corrided, the first one adapted. *)
       (* ex) x:t1 in U1, x:t2 in U2 =>  x:t1 in U1U2 [t1=t2]*)
-      let tyvar = TyVar (getfleshtyvar ()) in
+      let tyvar = TyVar (get_fleshtyvar ()) in
       let rules12 = (rules_of_samekey_in envU2 envU1) in
         (* |-e1<U1;u1>, |-e2<U2;u2> => |-e1 e2:<U1+U2;u3> *)
         let cond = (merge_envD envD1 envD2, exp, (merge_envU envU1 envU2, tyvar)) in
@@ -124,7 +127,9 @@ let rec make_condruletree envD exp =
               (* unify rules and apply to tree1' *)
               let subst = unify rules1' in
               let tree1 = apply_subst_to_condrulestree subst tree1' in
-              let Node(((_, _, typing1), _), _) = tree1 in
+              let Node(((_, _, typing1'), _), _) = tree1 in
+                (* reflesh tyvar *)
+                let typing1 = rename_typing typing1' in
                 (* [tree1; tree2; ...] *)
                 (* add tree before subst. *)
                 tree1'::(loop (k-1) envD expvar typing1 exp)
@@ -134,9 +139,9 @@ let rec make_condruletree envD exp =
       (* loop: ...-> (cond tree) list = [tree1; tree2; ...] *)
       (* what we want is last elmnt of the list *)
       (* return Node(lst elm, list) *)
-      let typing0 = ((envU_of_Bx (fvd_in_exp exp envD)), TyVar (getfleshtyvar ())) in
+      let typing0 = envU_of_Bx (fvd_in_exp exp envD) in
       let condtrees = loop !reccount envD expvar1 typing0 exp2 in
-      let Node(((_, _, typingk'), rulesk), _) = last_of condtrees in(* doing *)
+      let Node(((_, _, typingk'), rulesk), _) = last_of condtrees in
         let subst = unify rulesk in
         let typingk = apply_subst_to_typing subst typingk' in
         Node(((envD, exp, typingk), []), condtrees)
@@ -144,7 +149,7 @@ let rec make_condruletree envD exp =
 
 (* envD -> exp -> condtree, rules, condtree *)
 let infertype envD exp =
-  resetcounter();
+  reset_counter();
     let tree' = make_condruletree envD exp in
       let Node ((_, rules), _) = tree' in
       let subst = unify rules in
