@@ -1,9 +1,10 @@
+(* merge envU, envD, subst *)
+(* apply substitution *)
+
 open Syntax
 open EnvU
 open EnvD
 open Subst
-
-(* substitution, append, add, ... on Env, Sub, and rules *)
 
 (* envU -> envU -> envU *)
 (* x:t1 in U1, x:t2 in U2 =>  x:t1 in U1U2*)
@@ -121,16 +122,6 @@ let apply_subst_to_cond subst cond =
   let (envD, exp, typing) = cond in
   (apply_subst_to_envD subst envD, exp, apply_subst_to_typing subst typing)
 
-(* ('a -> 'b) -> 'a tree = 'b tree *)
-let rec map_to_tree func sometree = 
-  let Node (some, childs) = sometree in
-  match childs with
-  | [] -> Node (func some, [])
-  (* hd: 'a tree, tl: 'a tree list *)
-  | hd::tl ->
-    let newhead = map_to_tree func hd in
-    let Node (newsome, newtl) = map_to_tree func (Node(some, tl)) in
-    Node (newsome, newhead::newtl)
 
 (* subst -> cond tree -> cond tree *)
 let apply_subst_to_condtree subst condtree = map_to_tree (apply_subst_to_cond subst) condtree
@@ -140,15 +131,3 @@ let removerules condrulestree = map_to_tree (fun (cond, _ )-> cond) condrulestre
 
 (* subst -> condrulestree -> condrulestree *)
 let apply_subst_to_condrulestree subst condrulestree = map_to_tree (fun(cond, rules) -> (apply_subst_to_cond subst cond, [])) condrulestree
-
-(* ('a -> 'b -> 'b) -> 'a tree -> 'b -> 'b *)
-(* func:'a -> 'b -> 'b, tree:'a tree, init:'b *)
-let rec fold_tree func tree init = 
-  (* some:'a, childs:'a tree list *)
-  let Node (some, childs) = tree in
-  match childs with 
-  | [] -> func some init
-  | hd::tl ->
-    let newhead = fold_tree func hd init in
-    let Node (newsome, newtl) = fold_tree func (Node (some, tl)) init in
-     Node (newsome, newhead::newtl)

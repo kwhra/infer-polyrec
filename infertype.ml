@@ -34,6 +34,12 @@ let reccount = ref 0
 (* int -> unit *)
 let setreccount k = reccount := k;()
 
+(* typing -> typing -> bool *)
+let is_equal_typing typing1 typing2 = 
+	let new1 = rename_typing typing1 in
+	let new2 = rename_typing typing2 in
+	new1 = new2
+
 exception ErrorInfertype1
 exception ErrorInfertype2
 exception ErrorInfertype3

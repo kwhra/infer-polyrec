@@ -126,9 +126,3 @@ let rename_typing typing =
 	let (envU, ty) = typing in
 	let substlist = renamesubstlist_of_ty ty in
 	(apply_substlist_to_envU substlist envU, apply_substlist_to_ty substlist ty)
-
-(* typing -> typing -> bool *)
-let is_equal_typing typing1 typing2 = 
-	let new1 = rename_typing typing1 in
-	let new2 = rename_typing typing2 in
-	new1 = new2

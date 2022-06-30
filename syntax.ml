@@ -56,3 +56,26 @@ type condtree = condition tree
 (* (D, exp, ty),[rules] -  (D, exp, ty),[rules] *)
 (*                 |- (D, exp, ty),[rules] *) 
 type condruletree = (condition * rules) tree
+
+(* ('a -> 'b) -> 'a tree = 'b tree *)
+let rec map_to_tree func sometree = 
+  let Node (some, childs) = sometree in
+  match childs with
+  | [] -> Node (func some, [])
+  (* hd: 'a tree, tl: 'a tree list *)
+  | hd::tl ->
+    let newhead = map_to_tree func hd in
+    let Node (newsome, newtl) = map_to_tree func (Node(some, tl)) in
+    Node (newsome, newhead::newtl)
+    
+(* ('a -> 'b -> 'b) -> 'a tree -> 'b -> 'b *)
+(* func:'a -> 'b -> 'b, tree:'a tree, init:'b *)
+let rec fold_tree func tree init = 
+  (* some:'a, childs:'a tree list *)
+  let Node (some, childs) = tree in
+  match childs with 
+  | [] -> func some init
+  | hd::tl ->
+    let newhead = fold_tree func hd init in
+    let Node (newsome, newtl) = fold_tree func (Node (some, tl)) init in
+     Node (newsome, newhead::newtl)
