@@ -38,6 +38,7 @@ let rec fvs_in_exp exp = match exp with
   | ExpApp (exp1, exp2) -> (fvs_in_exp exp1) @ (fvs_in_exp exp2) 
   | ExpRec (expvar, exp2) -> delete expvar (fvs_in_exp exp2)
   | ExpLet (expvar, exp2, exp3) -> (fvs_in_exp exp2)@(delete expvar (fvs_in_exp exp3))
+  | ExpLetRec (expvar, exp2, exp3) -> (delete expvar (fvs_in_exp exp2))@(delete expvar (fvs_in_exp exp3))
   | ExpEq (exp1, exp2) -> (fvs_in_exp exp1) @ (fvs_in_exp exp2) 
   | _ -> []
 

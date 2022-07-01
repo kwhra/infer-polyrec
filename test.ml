@@ -88,46 +88,45 @@ let	tyZ	=	TyVar	25
 (* example on paper *)
 (* rec{f = \gy.ifc false y g(fgy)} *)
 let appFG = ExpApp(expF, expG)
-let exp0''' = ExpApp(expG, ExpApp(appFG, expY))
-let exp0'' = ExpApp(ExpApp(ExpApp(ExpCon Ifc, ExpCon Bool), expY), exp0''')
-let exp0' = ExpAbs(g, ExpAbs(y, exp0''))
-let exp0 = ExpRec(f, exp0')
+let ex0''' = ExpApp(expG, ExpApp(appFG, expY))
+let ex0'' = ExpApp(ExpApp(ExpApp(ExpCon Ifc, ExpCon Bool), expY), ex0''')
+let ex0' = ExpAbs(g, ExpAbs(y, ex0''))
+let ex0 = ExpRec(f, ex0')
 
 (* rec{f = \ghy.ifc false y g(fgh(fhgy))} *)
 let appFH = ExpApp(expF, expH)
-let exp1''' = ExpApp(expG, ExpApp(ExpApp(appFG, expH), ExpApp(ExpApp(appFH, expG), expY)))
-let exp1'' = ExpApp(ExpApp(ExpApp(ExpCon Ifc, ExpCon Bool), expY), exp1''')
-let exp1' = ExpAbs(g, ExpAbs(h, ExpAbs(y, exp1'')))
-let exp1 = ExpRec(f, exp1')
+let ex1''' = ExpApp(expG, ExpApp(ExpApp(appFG, expH), ExpApp(ExpApp(appFH, expG), expY)))
+let ex1'' = ExpApp(ExpApp(ExpApp(ExpCon Ifc, ExpCon Bool), expY), ex1''')
+let ex1' = ExpAbs(g, ExpAbs(h, ExpAbs(y, ex1'')))
+let ex1 = ExpRec(f, ex1')
 
 (* rec{f = \gh1h2y.ifc false y (g(fgh1h2(fh1gh2(fh1h2g y))))} *)
 let h' = "h'"
 let expH' = ExpVar h'
 let appFH = ExpApp(expF, expH)
 
-let exp2''' = ExpApp(expG, ExpApp(ExpApp(ExpApp(appFG, expH), expH'), ExpApp(ExpApp(ExpApp(appFH, expG), expH'), ExpApp(ExpApp(ExpApp(appFH, expH'), expG), expY))))
-let exp2'' = ExpApp(ExpApp(ExpApp(ExpCon Ifc, ExpCon Bool), expY), exp2''')
-let exp2' = ExpAbs(g, ExpAbs(h, ExpAbs(h', ExpAbs(y, exp2''))))
-let exp2 = ExpRec(f, exp2')
+let ex2''' = ExpApp(expG, ExpApp(ExpApp(ExpApp(appFG, expH), expH'), ExpApp(ExpApp(ExpApp(appFH, expG), expH'), ExpApp(ExpApp(ExpApp(appFH, expH'), expG), expY))))
+let ex2'' = ExpApp(ExpApp(ExpApp(ExpCon Ifc, ExpCon Bool), expY), ex2''')
+let ex2' = ExpAbs(g, ExpAbs(h, ExpAbs(h', ExpAbs(y, ex2''))))
+let ex2 = ExpRec(f, ex2')
 
 (* rec{f = \gh1h2h3y.ifc false y (g(fgh1h2h3(fh1gh2h3(fh1h2gh3(fh1h2h3g y)))))} *)
 let h'' = "h''"
 let expH'' = ExpVar h''
 
-let exp3''' = ExpApp(expG, ExpApp(ExpApp(ExpApp(ExpApp(appFG, expH), expH'), expH''), ExpApp(ExpApp(ExpApp(ExpApp(appFH, expG), expH'), expH''), ExpApp(ExpApp(ExpApp(ExpApp(appFH, expH'), expG), expH''), ExpApp(ExpApp(ExpApp(ExpApp(appFH, expH'), expH''), expG), expY)))))
-let exp3'' = ExpApp(ExpApp(ExpApp(ExpCon Ifc, ExpCon Bool), expY), exp3''')
-let exp3' = ExpAbs(g, ExpAbs(h, ExpAbs(h', ExpAbs(h'', ExpAbs(y, exp3'')))))
-let exp3 = ExpRec(f, exp3')
+let ex3''' = ExpApp(expG, ExpApp(ExpApp(ExpApp(ExpApp(appFG, expH), expH'), expH''), ExpApp(ExpApp(ExpApp(ExpApp(appFH, expG), expH'), expH''), ExpApp(ExpApp(ExpApp(ExpApp(appFH, expH'), expG), expH''), ExpApp(ExpApp(ExpApp(ExpApp(appFH, expH'), expH''), expG), expY)))))
+let ex3'' = ExpApp(ExpApp(ExpApp(ExpCon Ifc, ExpCon Bool), expY), ex3''')
+let ex3' = ExpAbs(g, ExpAbs(h, ExpAbs(h', ExpAbs(h'', ExpAbs(y, ex3'')))))
+let ex3 = ExpRec(f, ex3')
 
 let f' = "f'"
 let expF' = ExpVar f'
 let exp17true = ExpApp(expG, expX)
 let exp17false11 = ExpAbs(y, ExpAbs(h, ExpApp(expG, ExpApp(expH, expY))))
 let exp17false1 = ExpApp(ExpApp(expF, expF'), exp17false11)
-let exp17false = ExpApp(ExpApp(ExpApp(exp17false1, ExpCon Num), ExpVar x), ExpVar f')
-let exp17'' = ExpApp(ExpApp(ExpApp(ExpCon Ifc, ExpEq(ExpVar n, ExpCon Num)), exp17true), exp17false)
+let exp17false = ExpApp(ExpApp(ExpApp(exp17false1, ExpCon Int), ExpVar x), ExpVar f')
+let exp17'' = ExpApp(ExpApp(ExpApp(ExpCon Ifc, ExpEq(ExpVar n, ExpCon Int)), exp17true), exp17false)
 let exp17' = ExpAbs(f', ExpAbs(g, ExpAbs(n, ExpAbs(x, exp17''))))
 let exp17 = ExpRec(f, exp17')
-
 
 let initD = EnvD.empty

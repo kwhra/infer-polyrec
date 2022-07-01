@@ -16,9 +16,10 @@ let consttype_of c = match c with
   | Bool -> TyCon TyBool
   | Ifc -> let u = TyVar (get_fleshtyvar()) in
               TyArr(TyCon TyBool, TyArr(u, TyArr(u, u)))
-  | Arth -> let u = TyVar (get_fleshtyvar()) in
-              TyArr(u, TyArr(u, u))
-  | Num -> TyCon TyNum
+  | BiOpInt -> TyArr(TyCon TyInt, TyArr(TyCon TyInt, TyCon TyInt))
+  | UniOpReal -> TyArr(TyCon TyReal, TyCon TyReal)
+  | Int -> TyCon TyInt
+  | Real -> TyCon TyReal
 
 (* expvar list -> typing *)
 let typingBx ls = 
@@ -203,6 +204,23 @@ let rec make_condrulestree envD exp =
       let rules23 = (rules_of_samekey_in envU2 envU3) in
       let cond = (merge_envD envD2 envD3, exp, (merge_envU envU2 envU3, ty3)) in
       Node ((cond, rule::(rules2@rules3@rules23)), [tree2;tree3])
+  (* LetRec *)
+  (* D|-rec{x=e}:<U2, t2> D|-e3:<U3,x:t2; t3> *)
+  (* => D|-let rec{x=e} in e3:<U2U3, t3> *)
+  | ExpLetRec (expvar, exp2, exp3) ->
+    (* D|-rec{x=e2}:<U2;u2> *)
+    let tree2 = make_condrulestree envD (ExpRec(expvar, exp2)) in
+    let Node((cond2, rules2), _) = tree2 in
+    let (envD2, _, (envU2, ty2)) = cond2 in
+    (* D|-e3<U3,x:u;u3> *)
+    let tree3 = make_condrulestree envD exp3 in
+    let Node((cond3, rules3), _) = tree3 in
+    let (envD3, _, (envU3, ty3)) = cond3 in
+      (* u2 = u *)
+      let rule = (ty2, EnvU.find expvar envU3) in
+      let rules23 = (rules_of_samekey_in envU2 envU3) in
+      let cond = (merge_envD envD2 envD3, exp, (merge_envU envU2 envU3, ty3)) in
+      Node ((cond, rule::(rules2@rules3@rules23)), [tree2;tree3])
   (* Eq *)
   (* e:num e:num => e=e:bool *)
   | ExpEq (exp1, exp2) ->
@@ -215,13 +233,10 @@ let rec make_condrulestree envD exp =
     let Node((cond2, rules2), _) = tree2 in
     let (envD2, _, (envU2, ty2)) = cond2 in
       let rules12 = rules_of_samekey_in envU1 envU2 in
-      let rules = [(ty1, TyCon TyNum);(ty2, TyCon TyNum)] in
+      let rules = [(ty1, TyCon TyInt);(ty2, TyCon TyInt)] in
         let cond = (merge_envD envD1 envD2, exp, (merge_envU envU1 envU2, TyCon TyBool)) in
         Node ((cond, rules@rules12@rules1@rules2), [tree1;tree2])
       
-
-
-
 (* cond rules tree -> cond tree *)
 let unifiedcondtree_of condrulestree =
   (* condrulestree -> condrulestree *)

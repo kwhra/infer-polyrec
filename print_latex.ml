@@ -15,7 +15,8 @@ let rec latex_of_type ty = match ty with
   | TyCon tycon -> (match tycon with
                     | TyBool -> "\\mathrm{Bool}"
                     | TyUnit -> "\\mathrm{Unit}"
-                    | TyNum -> "\\mathrm{Num}")
+                    | TyInt -> "\\mathrm{Int}"
+                    | TyReal -> "\\mathrm{Real}")
   | TyVar tyvar -> latex_of_tyvar tyvar
   | TyArr (ty1, ty2) -> "( " ^ (latex_of_type ty1) ^ " \\rightarrow " ^ (latex_of_type ty2) ^ " )" (* (A->B) *)
 
@@ -40,8 +41,10 @@ let latex_of_typing typing = match typing with
 let latex_of_expcon expcon = match expcon with
   | Unit -> "\\mathrm{unit}"
   | Bool -> "\\mathrm{bool}"
-  | Num -> "0"
-  | Arth -> " + "
+  | Int -> "0"
+  | Real -> "1.0"
+  | BiOpInt -> " (+) "
+  | UniOpReal -> "\\mathrm{sqrt}"
   | Ifc -> "\\mathrm{Ifc}"
 
 let rec latex_of_exp exp = match exp with
@@ -50,7 +53,8 @@ let rec latex_of_exp exp = match exp with
   | ExpAbs (x1, exp2) -> " (\\backslash " ^ x1 ^ "." ^ (latex_of_exp exp2) ^ ")"
   | ExpApp (exp1, exp2) -> "(" ^ (latex_of_exp exp1) ^ "\\," ^ (latex_of_exp exp2) ^ ")"
   | ExpRec (expvar1, exp2) -> " \\mathrm{rec}\\{ " ^ expvar1 ^ "=" ^ (latex_of_exp exp2) ^ " \\} "
-  | ExpLet (expvar1, exp2, exp3) -> " \\mathrm{let}\\{" ^ expvar1 ^ "=" ^ (latex_of_exp exp2) ^ "\\}\\mathrm{in}\\," ^ (latex_of_exp exp3)
+  | ExpLet (expvar1, exp2, exp3) -> " \\mathrm{let}\\," ^ expvar1 ^ "=" ^ (latex_of_exp exp2) ^ "\\,\\mathrm{in}\\," ^ (latex_of_exp exp3)
+  | ExpLetRec (expvar1, exp2, exp3) -> " \\mathrm{let}\\,\\mathrm{rec}\\{" ^ expvar1 ^ "=" ^ (latex_of_exp exp2) ^ "\\}\\mathrm{in}\\," ^ (latex_of_exp exp3)
   | ExpEq (exp1, exp2) -> (latex_of_exp exp1) ^ "=" ^ (latex_of_exp exp2)
 
 let rec latex_of_rules rules = match rules with
@@ -88,6 +92,7 @@ let rec latex_of_condtree condtree =
     | ExpRec _ -> "% Rec\n" ^ 
                   "\\AxiomC{}\n" ^ "\\RightLabel{(Rec)}\n" ^ "\\UnaryInfC{ $" ^ (latex_of_cond cond) ^ "$ }\n"
     | ExpLet _ ->                  "\\RightLabel{(Let)}\n" ^ "\\BinaryInfC{ $" ^ (latex_of_cond cond) ^ "$ }\n"
+    | ExpLetRec _ ->               "\\RightLabel{(LetRec)}\n" ^ "\\BinaryInfC{ $" ^ (latex_of_cond cond) ^ "$ }\n"
     | ExpEq _ ->                  "\\RightLabel{(Eq)}\n"  ^ "\\BinaryInfC{ $" ^ (latex_of_cond cond) ^ "$ }\n"
   (* hd:cond tree, tl:cond tree list *))
   | hd::tl -> (latex_of_condtree hd) ^ (latex_of_condtree (Node (cond, tl))) ^ "\n"

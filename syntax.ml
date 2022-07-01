@@ -6,8 +6,10 @@ type expcon =
   | Unit
   | Bool
   | Ifc
-  | Num
-  | Arth
+  | Int
+  | Real
+  | BiOpInt
+  | UniOpReal
 
 type expression =
   | ExpVar of expvar
@@ -16,6 +18,7 @@ type expression =
   | ExpApp of expression * expression
   | ExpRec of expvar * expression
   | ExpLet of expvar * expression * expression
+  | ExpLetRec of expvar * expression * expression
   | ExpEq of expression * expression
 
 (* definitions of type *)
@@ -25,7 +28,8 @@ type tyvar = int
 type tycon = 
   | TyBool
   | TyUnit
-  | TyNum
+  | TyInt
+  | TyReal
   
 type ty = 
   | TyCon of tycon
