@@ -50,7 +50,7 @@ type rules = (ty * ty) list
 module EnvD = Map.Make(struct type t = expvar let compare = compare end)
 
 (* envD, expression, typing *)
-type condition = ((ty EnvD.t) * expression * typing)
+type condition = ((typing EnvD.t) * expression * typing)
 
 type 'a tree = Node of 'a * ('a tree list)
 
