@@ -120,7 +120,7 @@ let apply_subst_to_envD subst envD =
 (* subst -> cond -> cond *)
 let apply_subst_to_cond subst cond = 
   let (envD, exp, typing) = cond in
-  (apply_subst_to_envD subst envD, exp, apply_subst_to_typing subst typing)
+  (envD, exp, apply_subst_to_typing subst typing)
 
 
 (* subst -> cond tree -> cond tree *)
