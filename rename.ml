@@ -74,18 +74,6 @@ let apply_substlist_to_typing substlist typing =
 	let (envU, ty) = typing in
 		(apply_substlist_to_envU substlist envU, apply_substlist_to_ty substlist ty)
 
-(* ref tyvar *)
-let rename_counter = ref 0
-
-(* unit -> tyvar *)
-let get_fleshrename () = 
-	let temptyvar = !rename_counter in
-		rename_counter:=temptyvar+1;
-		temptyvar
-
-(* unit -> unit *)
-let reset_rename () = rename_counter := 0
-
 (* ref of list of existing tyvars *)
 let tyvarlist = ref []
 
@@ -107,13 +95,12 @@ let renamesubstlist_of_ty ty =
 		| TyVar tyvar -> 
 			if List.mem tyvar !tyvarlist 
 				then []
-				else  (add_tyvarlist tyvar;[Subst.singleton tyvar (TyVar (get_fleshrename ()))])
+				else  (add_tyvarlist tyvar;[Subst.singleton tyvar (TyVar (get_fleshtyvar ()))])
 		| TyArr (ty1, ty2) ->
 			let list1 = renamesubstlist_of_ty_loop ty1 in
 			let list2 = renamesubstlist_of_ty_loop ty2 in
 			list1@list2
 	in
-	reset_rename();
 	reset_tyvarlist();
 	renamesubstlist_of_ty_loop ty
 

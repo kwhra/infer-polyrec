@@ -24,7 +24,6 @@ let set_current_tyvar tyvar = tyvar_counter := tyvar
 (* unit -> unit *)
 let reset_counter () = tyvar_counter := 0
 
-
 (* 'a -> 'a list -> 'a list *)
 let rec delete elm ls = match ls with
   | [] -> ls
@@ -54,7 +53,6 @@ let rec fvs_in_ty ty = match ty with
 (* tyvar -> ty -> bool *)
 let is_fv_in_ty tyvar ty = List.mem tyvar (fvs_in_ty ty)
 
-(* new: *)
 (* envU -> expvar list *)
 let domU envU = List.map (fun (key, _) -> key) (EnvU.bindings envU)
 let domD envD = List.map (fun (key, _) -> key) (EnvD.bindings envD)

@@ -129,4 +129,6 @@ let exp17'' = ExpApp(ExpApp(ExpApp(ExpCon Ifc, ExpEq(ExpVar n, ExpCon Int)), exp
 let exp17' = ExpAbs(f', ExpAbs(g, ExpAbs(n, ExpAbs(x, exp17''))))
 let exp17 = ExpRec(f, exp17')
 
+let expXXX = ExpRec(x, ExpApp(expX, expX))
+
 let initD = EnvD.empty

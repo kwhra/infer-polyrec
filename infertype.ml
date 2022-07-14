@@ -38,8 +38,12 @@ let setreccount k = reccount := k;()
 
 (* typing -> typing -> bool *)
 let is_equal_typing typing1 typing2 = 
+  let temptyvar = get_current_tyvar() in
+  reset_counter();
 	let new1 = rename_typing typing1 in
+  reset_counter();
 	let new2 = rename_typing typing2 in
+  set_current_tyvar temptyvar;
 	new1 = new2
 
 exception ErrorInfertype1
@@ -54,14 +58,16 @@ let rec make_condrulestree envD exp =
   (* var & var-P *)        
   | ExpVar x -> 
     if is_in_domD x envD
-      (* var: base case *)
-      (* D, x:u |- x:<;u> *)
+      (* var-p: base case *)
+      (* D, x:<U;u> |- x:<U, x:u;u> *)
             (* find "x:u" in D *)
-      then  let typing = EnvD.find x envD in
-            (* "no condition" => D,x:u|-x:<;u> *)
+      then  let typing' = EnvD.find x envD in
+            let (envU', u) = rename_typing typing' in
+            let envU = EnvU.add x u envU' in
+            let typing = (envU, u) in
             let condrule = ((envD, exp, typing), []) in
               Node (condrule, [])
-      (* var-P: base case *)
+      (* var: base case *)
       (* |-x:<x:u;u> *)
       else  let u = TyVar (get_fleshtyvar()) in
             (* "no condition" => D|-x:<x:u;u> *)
@@ -134,7 +140,9 @@ let rec make_condrulestree envD exp =
             let Node(((_, _, typing1'), rules1'), _) = tree1' in
               (* unify rules and apply to tree1' *)
               let subst = unify rules1' in
-              let typing1 = apply_subst_to_typing subst typing1' in
+              let (envU1', ty1) = apply_subst_to_typing subst typing1' in
+              let envU1 = EnvU.remove expvar envU1' in
+              let typing1 = (envU1, ty1) in
                 (* [tree1; tree2; ...] *)
                 (* add tree before subst. *)
                 tree1'::(loop (k-1) envD expvar typing1 exp)
@@ -184,7 +192,9 @@ let rec make_condrulestree envD exp =
             let substkk = unify ruleskk in
             let typingkk = apply_subst_to_typing substkk typingkk' in
               if is_equal_typing typingk typingkk
-                then  let cond = (envD, exp, typingk) in
+                then  let (envU', u) = typingk in
+                      let envU = EnvU.remove expvar1 envU' in
+                      let cond = (envD, exp, (envU, u)) in
                       Node((cond, []), condtrees) 
                 else recML envD expvar1 exp2 )
   (* Let *)
