@@ -13,7 +13,7 @@ open Infertype
 open Test
 
 (* input envD and exp to test infering type *)
-let testexp = ex0
+let testexp = ex3
 let testenvD = initD
 
 (* input destination of log *)

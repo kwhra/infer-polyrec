@@ -62,9 +62,7 @@ let rec make_condrulestree envD exp =
       (* D, x:<U;u> |- x:<U, x:u;u> *)
             (* find "x:u" in D *)
       then  let typing' = EnvD.find x envD in
-            let (envU', u) = rename_typing typing' in
-            let envU = EnvU.add x u envU' in
-            let typing = (envU, u) in
+            let typing = rename_typing typing' in
             let condrule = ((envD, exp, typing), []) in
               Node (condrule, [])
       (* var: base case *)
@@ -183,7 +181,7 @@ let rec make_condrulestree envD exp =
               then  let cond = (envD, exp, typingk) in
                     Node((cond, []), condtrees)
               (* Rec-ML *)
-              else recML envD expvar1 exp2 
+              else (print_string("cannot infer with rec-k\n");recML envD expvar1 exp2)
           (* otherwise: k>=2 *)
           | _ -> 
             (* denote typingk-1 as typingkk *)
@@ -196,7 +194,7 @@ let rec make_condrulestree envD exp =
                       let envU = EnvU.remove expvar1 envU' in
                       let cond = (envD, exp, (envU, u)) in
                       Node((cond, []), condtrees) 
-                else recML envD expvar1 exp2 )
+              else (print_string("cannot infer with rec-k\n");recML envD expvar1 exp2) )
   (* Let *)
   (* D|-e2:<U2;u2>, D|-e3:<U3,x:u;u3> (u2 = u)*)
   (* => D|-let x=e2 in e3:<U;u3> *)
